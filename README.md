@@ -9,7 +9,7 @@
 
 ### 📦 Modules
 
-#### 🔁 `UpeSequencesModule`
+#### 🔁 DupeSequencesModule`
 - **Purpose:** Handles sequences or patterns related to duplication mechanics (or similar automation logic).
 - **Category:** `CinnaUtil`
 - **Registration:** Added to the CinnaUtil module system.
@@ -59,7 +59,7 @@
 
 - Minecraft **1.21.5**
 - [Meteor Client](https://meteorclient.com/)
-- Java 17+
+- Java 21
 
 ---
 
@@ -79,5 +79,5 @@ Feel free to report issues or suggest features by opening an issue on the GitHub
 
 ## 🧠 Credits
 
-Developed by [Your Name / Alias]  
+Developed by Cinnamonpuma
 Powered by Meteor Client
