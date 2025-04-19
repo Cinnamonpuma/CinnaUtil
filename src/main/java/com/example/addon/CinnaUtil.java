@@ -1,8 +1,8 @@
 package com.example.addon;
 
-import com.example.addon.commands.MultiDupeCommand;
+import com.example.addon.commands.MultiInstanceCmd;
 import com.example.addon.commands.WaitCommand;
-import com.example.addon.modules.CmiDupe;
+import com.example.addon.modules.MultiInstanceMovement;
 import com.example.addon.modules.ChatColorModule;
 import com.example.addon.systems.DupeSystem;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
@@ -11,7 +11,7 @@ import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import org.slf4j.Logger;
 import com.example.addon.modules.DupeSequencesModule;
-import com.example.addon.modules.MultiInstanceDupe;
+import com.example.addon.modules.MultiInstanceCommand;
 import org.slf4j.LoggerFactory;
 
 public class
@@ -29,14 +29,14 @@ CinnaUtil extends MeteorAddon {
 
         // Register modules
         Modules.get().add(new DupeSequencesModule());
-        Modules.get().add(new MultiInstanceDupe());
-        Modules.get().add(new CmiDupe());
+        Modules.get().add(new MultiInstanceCommand());
+        Modules.get().add(new MultiInstanceMovement());
         Modules.get().add(new ChatColorModule());
 
 
         // Register commands
         Commands.add(new WaitCommand());
-        Commands.add(new MultiDupeCommand());
+        Commands.add(new MultiInstanceCmd());
 
         // Register HUD elements
 

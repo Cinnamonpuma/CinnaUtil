@@ -6,16 +6,13 @@ import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.util.Hand;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.Direction;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class CmiDupe extends Module {
+public class MultiInstanceMovement extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private final SettingGroup sgSync = settings.createGroup("Sync");
 
@@ -88,7 +85,7 @@ public class CmiDupe extends Module {
     private boolean processInputs = true;
     private long lastSyncTime = 0;
 
-    public CmiDupe() {
+    public MultiInstanceMovement() {
         super(CinnaUtil.CATEGORY, "cmi-dupe", "Synchronized movement between two instances");
     }
 

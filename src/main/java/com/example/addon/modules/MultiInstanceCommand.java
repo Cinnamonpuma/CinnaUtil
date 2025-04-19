@@ -13,7 +13,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiInstanceDupe extends Module {
+public class MultiInstanceCommand extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private final SettingGroup sgCommands = settings.createGroup("Commands");
 
@@ -67,7 +67,7 @@ public class MultiInstanceDupe extends Module {
     private boolean isExecuting;
     private long lastExecuteTime;
 
-    public MultiInstanceDupe() {
+    public MultiInstanceCommand() {
         super(CinnaUtil.CATEGORY, "multi-instance-dupe", "Execute commands on two instances simultaneously");
     }
 

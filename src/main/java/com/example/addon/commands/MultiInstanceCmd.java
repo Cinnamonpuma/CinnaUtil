@@ -1,22 +1,20 @@
 package com.example.addon.commands;
 
-import com.example.addon.modules.MultiInstanceDupe;
+import com.example.addon.modules.MultiInstanceCommand;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import meteordevelopment.meteorclient.commands.Command;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import net.minecraft.command.CommandSource;
 
-import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
-
-public class MultiDupeCommand extends Command {
-    public MultiDupeCommand() {
+public class MultiInstanceCmd extends Command {
+    public MultiInstanceCmd() {
         super("multidupe", "Controls the multi-instance dupe module");
     }
 
     @Override
     public void build(LiteralArgumentBuilder<CommandSource> builder) {
         builder.then(literal("start").executes(context -> {
-            MultiInstanceDupe module = Modules.get().get(MultiInstanceDupe.class);
+            MultiInstanceCommand module = Modules.get().get(MultiInstanceCommand.class);
             if (module == null) {
                 error("Module not found!");
                 return SINGLE_SUCCESS;
@@ -32,7 +30,7 @@ public class MultiDupeCommand extends Command {
         }));
 
         builder.then(literal("stop").executes(context -> {
-            MultiInstanceDupe module = Modules.get().get(MultiInstanceDupe.class);
+            MultiInstanceCommand module = Modules.get().get(MultiInstanceCommand.class);
             if (module == null) {
                 error("Module not found!");
                 return SINGLE_SUCCESS;
@@ -43,7 +41,7 @@ public class MultiDupeCommand extends Command {
         }));
 
         builder.then(literal("toggle").executes(context -> {
-            MultiInstanceDupe module = Modules.get().get(MultiInstanceDupe.class);
+            MultiInstanceCommand module = Modules.get().get(MultiInstanceCommand.class);
             if (module == null) {
                 error("Module not found!");
                 return SINGLE_SUCCESS;
