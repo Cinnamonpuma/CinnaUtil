@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "cinnautil",
+  "version": "2.0",
+  "name": "CinnaUtil",
+  "description": "Utility mod with duplication features",
+  "authors": [
+    "Cinnamonpuma"
+  ],
+  "contact": {
+    "homepage": "https://github.com/MeteorDevelopment/",
+    "issues": "https://github.com/MeteorDevelopment/meteor-client/issues",
+    "sources": "https://github.com/MeteorDevelopment/meteor-client"
+  },
+  "license": "MIT",
+  "icon": "assets/cinnautil/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+      "com.example.addon.CinnaUtil"
+    ]
+  },
+  "mixins": [
+    "cinnautil.mixins.json"
+  ],
+  "depends": {
+    "java": ">=21",
+    "minecraft": ">=1.21.4",
+    "meteor-client": "*"
+  }
+}
