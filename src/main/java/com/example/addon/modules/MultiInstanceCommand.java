@@ -68,7 +68,7 @@ public class MultiInstanceCommand extends Module {
     private long lastExecuteTime;
 
     public MultiInstanceCommand() {
-        super(CinnaUtil.CATEGORY, "multi-instance-dupe", "Execute commands on two instances simultaneously");
+        super(CinnaUtil.CATEGORY, "multi-instance-command", "Execute commands on two instances simultaneously");
     }
 
     @Override

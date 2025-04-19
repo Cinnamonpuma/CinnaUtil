@@ -86,7 +86,7 @@ public class MultiInstanceMovement extends Module {
     private long lastSyncTime = 0;
 
     public MultiInstanceMovement() {
-        super(CinnaUtil.CATEGORY, "cmi-dupe", "Synchronized movement between two instances");
+        super(CinnaUtil.CATEGORY, "multi-instance-movement", "Synchronized movement between two instances");
     }
 
     @Override
