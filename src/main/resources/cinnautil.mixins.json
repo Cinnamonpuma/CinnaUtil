@@ -3,7 +3,8 @@
   "package": "com.example.addon.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "ContainerScreenMixin"
+    "ContainerScreenMixin",
+    "HandledScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
