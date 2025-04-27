@@ -77,7 +77,7 @@ public class SequenceAction implements ISerializable<SequenceAction> {
         tag.putString("data", data);
         tag.putInt("slot", slot);
         tag.putInt("count", count);
-        tag.putInt("repeatCount", repeatCount); // Save repeatCount
+        tag.putInt("repeatCount", repeatCount);
         tag.putString("slotActionType", slotActionType.name());
         return tag;
     }

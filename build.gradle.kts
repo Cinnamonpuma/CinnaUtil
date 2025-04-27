@@ -25,6 +25,12 @@ dependencies {
     mappings("net.fabricmc:yarn:${properties["yarn_mappings"] as String}:v2")
     modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"] as String}")
 
+
+
+    // Netty - corrected syntax
+    implementation("io.netty:netty-all:4.1.97.Final")
+    include("io.netty:netty-all:4.1.97.Final")
+
     // Meteor
     modImplementation("meteordevelopment:meteor-client:${properties["minecraft_version"] as String}-SNAPSHOT")
 }

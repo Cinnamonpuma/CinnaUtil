@@ -47,7 +47,7 @@ public class WaitCommand extends Command {
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    // Send the command as a chat message
+
                     ChatUtils.sendPlayerMsg(command);
                 }
             }, time);

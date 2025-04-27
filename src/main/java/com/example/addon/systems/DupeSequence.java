@@ -11,7 +11,7 @@ import java.util.List;
 public class DupeSequence implements ISerializable<DupeSequence> {
     private String name;
     private List<SequenceAction> actions = new ArrayList<>();
-    private int delayBetweenActions = 500; // milliseconds
+    private int delayBetweenActions = 0;
     private boolean allAtOnce = false;
     private Keybind keybind = Keybind.none();
     private boolean active = false;
@@ -62,7 +62,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         this.allAtOnce = allAtOnce;
     }
 
-    // For backward compatibility
+
     public List<String> getCommands() {
         List<String> commands = new ArrayList<>();
         for (SequenceAction action : actions) {
@@ -73,17 +73,17 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         return commands;
     }
 
-    // For backward compatibility
+
     public void addCommand(String command) {
         actions.add(new SequenceAction(ActionType.COMMAND, command));
     }
 
-    // For backward compatibility
+
     public int getDelayBetweenCommands() {
         return delayBetweenActions;
     }
 
-    // For backward compatibility
+
     public void setDelayBetweenCommands(int delay) {
         this.delayBetweenActions = delay;
     }
@@ -113,7 +113,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
 
         actions.clear();
         if (tag.contains("actions")) {
-            // New format with actions
+
             NbtList actionsTag = tag.getList("actions").orElse(new NbtList());
             for (NbtElement element : actionsTag) {
                 if (element instanceof NbtCompound actionTag) {
@@ -123,7 +123,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
                 }
             }
         } else if (tag.contains("commands")) {
-            // Old format with just commands
+
             NbtList commandsTag = tag.getList("commands").orElse(new NbtList());
             for (NbtElement element : commandsTag) {
                 addCommand(element.asString().orElse(""));

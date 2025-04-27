@@ -16,7 +16,7 @@ public abstract class ContainerScreenMixin<T extends ScreenHandler> {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        // Log information about the container when it's opened
+
         CinnaUtil.LOG.info("Container opened: " + handler.getClass().getSimpleName() +
             " with syncId: " + handler.syncId +
             " and " + handler.slots.size() + " slots");
