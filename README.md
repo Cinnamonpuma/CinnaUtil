@@ -1,4 +1,3 @@
-
 # 🌟 CinnaUtil - A Meteor Addon for Minecraft 1.21.5
 
 **CinnaUtil** is a modular utility addon for the [Meteor Client](https://meteorclient.com/), designed to enhance your gameplay experience with powerful features for automation, multi-instance control, and more. Built for **Minecraft 1.21.5**, it offers several unique modules and commands to supercharge your Meteor setup.
@@ -9,49 +8,85 @@
 
 ### 📦 Modules
 
-#### 🔁 DupeSequencesModule`
-- **Purpose:** Handles sequences or patterns related to duplication mechanics (or similar automation logic).
+#### 🔁 `DupeSequencesModule`
+- **Purpose:** Create and manage automated sequences for item duplication
+- **Features:**
+  - Custom sequence creation
+  - Multiple action types: commands, packets, waits
+  - Adjustable delays and repeat counts
+  - GUI-based sequence editor
+  - Save/load sequences
 - **Category:** `CinnaUtil`
-- **Registration:** Added to the CinnaUtil module system.
 
 #### 🧠 `MultiInstanceCommand`
-- **Purpose:** Adds command functionality to support multi-instance setups, allowing advanced control and management of multiple running instances.
+- **Purpose:** Advanced multi-instance control and automation
+- **Features:**
+  - Command synchronization
+  - Automated sequence execution
+  - Start/stop/toggle functionality
 - **Category:** `CinnaUtil`
-- **Registration:** Added to the CinnaUtil module system.
 
 #### 🔄 `MultiInstanceMovement`
-- **Purpose:** Enables synchronization of movement and interactions between two Minecraft instances.
-- **Key Features:**
-  - **Parent Mode:** Acts as a host server for child instances to connect.
-  - **Child Mode:** Connects to the parent instance.
-  - **Sync Options:** Movement, rotation, interactions, and attacks.
+- **Purpose:** Synchronize actions between Minecraft instances
+- **Features:**
+  - Parent/Child mode system
+  - Movement synchronization
+  - Rotation syncing
+  - Action mirroring
+  - Network communication
 - **Category:** `CinnaUtil`
-- **Registration:** Added to the CinnaUtil module system.
 
 #### 🎨 `ChatColorModule`
-- **Purpose:** Allows customization and modification of chat colors to enhance communication or visual clarity.
+- **Purpose:** Enhanced chat customization
+- **Features:**
+  - Custom color schemes
+  - Message formatting
+  - Visual improvements
 - **Category:** `CinnaUtil`
-- **Registration:** Added to the CinnaUtil module system.
+
+#### 💬 `ChatSyncModule`
+- **Purpose:** Synchronize chat across instances
+- **Features:**
+  - Message synchronization
+  - Command integration
+  - Toggle functionality
+- **Category:** `CinnaUtil`
 
 ---
 
 ## 🧾 Commands
 
 #### ⏳ `WaitCommand`
-- **Purpose:** Introduces delay functionality for automation scripts or macros.
-- **Registration:** Added to the CinnaUtil command system.
+- **Usage:** `.wait <ticks> <command>`
+- **Purpose:** Execute commands with precise timing
+- **Features:**
+  - Tick-based timing system
+  - Command queueing
+  - Minecraft-synchronized execution
 
 #### 🖥️ `MultiInstanceCmd`
-- **Purpose:** Provides command-based control for the `MultiInstanceMovement` module. Useful for quickly configuring or toggling multi-instance settings.
-- **Registration:** Added to the CinnaUtil command system.
+- **Usage:** `.multidupe <start|stop|toggle>`
+- **Purpose:** Control multi-instance functionality
+- **Features:**
+  - Start/stop automation
+  - Module toggling
+  - Status feedback
+
+#### 💭 `ChatSyncCmd`
+- **Usage:** `.chatsync <send|toggle>`
+- **Purpose:** Control chat synchronization
+- **Features:**
+  - Message broadcasting
+  - Module toggling
+  - Status feedback
 
 ---
 
 ## 📦 Installation
 
-1. Download the latest release of CinnaUtil for Minecraft 1.21.5.
-2. Place the `.jar` file in your Meteor Client `addons` folder.
-3. Launch Meteor Client and ensure CinnaUtil modules appear under the `CinnaUtil` category.
+1. Download the latest release of CinnaUtil for Minecraft 1.21.5
+2. Place the `.jar` file in your Meteor Client `addons` folder
+3. Launch Meteor Client and locate modules under the `CinnaUtil` category
 
 ---
 
@@ -65,15 +100,24 @@
 
 ## 🔧 Configuration
 
-Modules can be enabled/disabled and configured from within Meteor Client's GUI. Look under the **CinnaUtil** category for available options.
+Access module settings through Meteor Client's GUI under the **CinnaUtil** category.
 
-For `MultiInstanceMovement`, configure the instance as either a **Parent** or **Child**, set the appropriate IP/Port, and choose the data to synchronize (movement, rotation, etc.).
+**DupeSequences Configuration:**
+- Create custom sequences
+- Set delays and repeat counts
+- Configure action types
+- Save/load configurations
+
+**MultiInstance Configuration:**
+- Set Parent/Child modes
+- Configure network settings
+- Customize sync options
 
 ---
 
 ## 📬 Feedback & Issues
 
-Feel free to report issues or suggest features by opening an issue on the GitHub repository (if applicable), or contacting the developer through the appropriate channel.
+Report issues or suggest features through GitHub issues or contact the developer directly.
 
 ---
 
