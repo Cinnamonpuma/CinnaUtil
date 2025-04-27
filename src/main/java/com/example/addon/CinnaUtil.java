@@ -1,17 +1,15 @@
 package com.example.addon;
 
+import com.example.addon.commands.ChatSyncCmd;
 import com.example.addon.commands.MultiInstanceCmd;
 import com.example.addon.commands.WaitCommand;
-import com.example.addon.modules.MultiInstanceMovement;
-import com.example.addon.modules.ChatColorModule;
+import com.example.addon.modules.*;
 import com.example.addon.systems.DupeSystem;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
 import meteordevelopment.meteorclient.commands.Commands;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import org.slf4j.Logger;
-import com.example.addon.modules.DupeSequencesModule;
-import com.example.addon.modules.MultiInstanceCommand;
 import org.slf4j.LoggerFactory;
 
 public class
@@ -25,18 +23,22 @@ CinnaUtil extends MeteorAddon {
         LOG.info("Initializing CinnaUtil");
 
         // Initialize DupeSystem
-        DupeSystem.INSTANCE = new DupeSystem();
+        DupeSystem dupeSystem = new DupeSystem();
+        meteordevelopment.meteorclient.systems.Systems.add(dupeSystem);
+        DupeSystem.INSTANCE = dupeSystem;
 
         // Register modules
         Modules.get().add(new DupeSequencesModule());
         Modules.get().add(new MultiInstanceCommand());
         Modules.get().add(new MultiInstanceMovement());
         Modules.get().add(new ChatColorModule());
+        Modules.get().add(new ChatSyncModule());
 
 
         // Register commands
         Commands.add(new WaitCommand());
         Commands.add(new MultiInstanceCmd());
+        Commands.add(new ChatSyncCmd());
 
         // Register HUD elements
 
