@@ -85,7 +85,7 @@
 ## 📦 Installation
 
 1. Download the latest release of CinnaUtil for Minecraft 1.21.5
-2. Place the `.jar` file in your Meteor Client `addons` folder
+2. Place the `.jar` file in your Mods folder along with Meteor Client
 3. Launch Meteor Client and locate modules under the `CinnaUtil` category
 
 ---
@@ -94,7 +94,6 @@
 
 - Minecraft **1.21.5**
 - [Meteor Client](https://meteorclient.com/)
-- Java 21
 
 ---
 
