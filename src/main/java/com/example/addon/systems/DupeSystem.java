@@ -13,7 +13,13 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
     private List<DupeSequence> sequences = new ArrayList<>();
     public static boolean isRunningSequence = false;
     public static Thread currentSequenceThread = null;
+    private static DupeSequence currentSequence = null; // Added field
     private static final int TICKS_PER_SECOND = 20;
+
+    // Added getter
+    public static DupeSequence getCurrentSequence() {
+        return currentSequence;
+    }
 
     public DupeSystem() {
         super("dupe");
@@ -74,6 +80,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
 
     public static void stopCurrentSequence() {
         isRunningSequence = false;
+        currentSequence = null; // Clear current sequence
         if (currentSequenceThread != null) {
             currentSequenceThread.interrupt();
             currentSequenceThread = null;
@@ -82,6 +89,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
 
     public static void executeSequence(DupeSequence sequence, int repeatCount) {
         stopCurrentSequence();
+        currentSequence = sequence; // Set current sequence
         isRunningSequence = true;
 
         Thread sequenceThread = new Thread(() -> {
@@ -120,6 +128,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
             } finally {
                 isRunningSequence = false;
                 currentSequenceThread = null;
+                 currentSequence = null; // Clear current sequence on natural completion
             }
         });
 

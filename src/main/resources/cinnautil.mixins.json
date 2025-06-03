@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "ContainerScreenMixin",
-    "HandledScreenMixin"
+    "HandledScreenMixin",
+    "CinnaLFDupeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

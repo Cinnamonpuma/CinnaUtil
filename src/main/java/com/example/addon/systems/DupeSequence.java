@@ -62,6 +62,13 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         this.allAtOnce = allAtOnce;
     }
 
+    public Keybind getKeybind() {
+        return keybind;
+    }
+
+    public void setKeybind(Keybind keybind) {
+        this.keybind = keybind;
+    }
 
     public List<String> getCommands() {
         List<String> commands = new ArrayList<>();
@@ -94,6 +101,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         tag.putString("name", name);
         tag.putInt("delay", delayBetweenActions);
         tag.putBoolean("allAtOnce", allAtOnce);
+        tag.putString("keybind", keybind.toString());
 
         NbtList actionsTag = new NbtList();
         for (SequenceAction action : actions) {
@@ -110,6 +118,30 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         name = tag.getString("name").orElse("Unnamed Sequence");
         delayBetweenActions = tag.getInt("delay").orElse(500);
         allAtOnce = tag.getBoolean("allAtOnce").orElse(false);
+
+        // Deserialize keybind
+        if (tag.contains("keybind", 8)) { // 8 is NbtElement.STRING_TYPE
+            String keybindString = tag.getString("keybind"); // Assumes this returns String, not Optional<String>
+            if (keybindString != null && !keybindString.isEmpty()) {
+                try {
+                    // Attempt to parse the keybind string
+                    this.keybind = Keybind.fromString(keybindString);
+                    if (this.keybind == null) { // Defensive check if fromString can return null
+                        this.keybind = Keybind.none();
+                    }
+                } catch (Exception e) {
+                    // Log the error and default to Keybind.none() if parsing fails
+                    System.err.println("[DupeSequence] Failed to parse keybind string '" + keybindString + "': " + e.getMessage());
+                    this.keybind = Keybind.none();
+                }
+            } else {
+                // Handle empty or null keybind string from NBT
+                this.keybind = Keybind.none();
+            }
+        } else {
+            // Keybind tag does not exist or is not a string, default to Keybind.none()
+            this.keybind = Keybind.none();
+        }
 
         actions.clear();
         if (tag.contains("actions")) {

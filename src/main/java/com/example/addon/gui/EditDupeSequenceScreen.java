@@ -75,6 +75,22 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
+        // Keybind
+        table.add(theme.label("Keybind:"));
+        var keybindWidget = table.add(theme.keybind(sequence.getKeybind())).expandX().widget();
+        keybindWidget.action = () -> {
+            meteordevelopment.meteorclient.utils.misc.Keybind currentKeybind = keybindWidget.get();
+            if (currentKeybind != null) {
+                sequence.setKeybind(currentKeybind);
+                DupeSystem.get().save();
+            } else {
+                // Optional: Handle case where keybind might be null if `get()` can return that
+                // For now, we assume `get()` returns a valid Keybind or one representing 'none'
+                // If it can be truly null and that's an issue for sequence.setKeybind,
+                // then sequence.setKeybind(Keybind.none()) might be an alternative here.
+            }
+        };
+        table.row();
 
         var actionsSection = table.add(theme.section("Actions")).expandX().widget();
         var actionsTable = actionsSection.add(theme.table()).expandX().widget();
@@ -185,9 +201,24 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
-        WButton testBtn = table.add(theme.button("Start Sequence")).expandX().widget();
+        String buttonText = "Start Sequence";
+        // Assuming DupeSystem.get().getCurrentSequence() will be implemented
+        // For now, using DupeSystem.isRunningSequence as a placeholder to determine if *this* sequence is running.
+        // This will need adjustment when getCurrentSequence() is available.
+        if (DupeSystem.isRunningSequence /* && DupeSystem.get().getCurrentSequence() == sequence */) {
+            buttonText = "Stop Sequence";
+        }
+        WButton testBtn = table.add(theme.button(buttonText)).expandX().widget();
         testBtn.action = () -> {
-            runSequenceWithRepeat(sequence, sequence.getRepeatCount());
+            // Same placeholder logic as above for determining if *this* sequence is running
+            if (DupeSystem.isRunningSequence /* && DupeSystem.get().getCurrentSequence() == sequence */) {
+                DupeSystem.stopCurrentSequence();
+            } else {
+                // Pass the current sequence and its repeat count to the execution method
+                DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
+            }
+            clear(); // Re-initialize widgets to update button text
+            initWidgets();
         };
 
         WButton backBtn = table.add(theme.button("Back")).expandX().widget();
@@ -198,6 +229,26 @@ public class EditDupeSequenceScreen extends WindowScreen {
         DupeSystem.executeSequence(sequence, repeatCount);
     }
 
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        super.keyPressed(keyCode, scanCode, modifiers); // Let super handle Escape, etc.
+
+        if (sequence.getKeybind().matches(true, keyCode, scanCode)) {
+            // Assuming DupeSystem.isRunningSequence correctly reflects if *any* sequence is running.
+            // And that we want to stop *any* sequence if this keybind is pressed,
+            // or start this one if no sequence is running.
+            // A more precise check would involve DupeSystem.getCurrentSequence() == sequence.
+            if (DupeSystem.isRunningSequence) { // Simplified check
+                DupeSystem.stopCurrentSequence();
+            } else {
+                DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
+            }
+            clear(); // Re-initialize widgets to update button text or other UI elements
+            initWidgets();
+            return true; // Keybind was handled
+        }
+        return false; // Keybind not handled by this screen
+    }
 
     private class EditActionScreen extends WindowScreen {
         private final DupeSequence sequence;
