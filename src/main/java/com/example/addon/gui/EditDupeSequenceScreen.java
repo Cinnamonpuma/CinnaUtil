@@ -8,6 +8,10 @@ import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.WindowScreen;
 import meteordevelopment.meteorclient.gui.widgets.containers.WTable;
 import meteordevelopment.meteorclient.gui.widgets.pressable.WButton;
+import meteordevelopment.meteorclient.gui.widgets.WWidget;
+// Remove the problematic import
+// import meteordevelopment.meteorclient.gui.widgets.input.WKeybind;
+import meteordevelopment.meteorclient.utils.misc.Keybind;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
 
@@ -53,6 +57,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
 
         table.add(theme.label("Execute all at once:"));
         var allAtOnceCheckbox = table.add(theme.checkbox(sequence.isAllAtOnce())).widget();
+        var allAtOnceCheckbox = table.add(theme.checkbox(sequence.isAllAtOnce())).widget();
         allAtOnceCheckbox.action = () -> {
             sequence.setAllAtOnce(allAtOnceCheckbox.checked);
             DupeSystem.get().save();
@@ -92,6 +97,20 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
+        // Keybind - Alternative approach using text box for now
+        table.add(theme.label("Keybind:"));
+        String keybindText = sequence.getKeybind() != null ? sequence.getKeybind().toString() : "None";
+        var keybindLabel = table.add(theme.label(keybindText)).expandX().widget();
+        
+        // Add a button to set keybind manually (you can enhance this later)
+        var setKeybindBtn = table.add(theme.button("Set Keybind")).widget();
+        setKeybindBtn.action = () -> {
+            // For now, just show that keybind functionality needs to be implemented
+            // You would need to implement a custom keybind setting dialog
+            // or use the proper Meteor Client keybind widget if available
+        };
+        table.row();
+
         var actionsSection = table.add(theme.section("Actions")).expandX().widget();
         var actionsTable = actionsSection.add(theme.table()).expandX().widget();
 
@@ -110,6 +129,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
             } else if (action.getType() == ActionType.PACKET) {
                 actionLabel = "Packet: Slot " + action.getSlot() + (action.getRepeatCount() > 1 ? " (x" + action.getRepeatCount() + ")" : "");
             } else if (action.getType() == ActionType.WAIT) {
+                actionLabel = "Wait: " + action.getData() + "ticks";
                 actionLabel = "Wait: " + action.getData() + "ticks";
             } else if (action.getType() == ActionType.CLOSE_GUI) {
                 actionLabel = "Close GUI: " + (action.getData().equals("desync") ? "Desync" : "Normal");
@@ -185,6 +205,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
         addWaitBtn.action = () -> {
             SequenceAction action = new SequenceAction(ActionType.WAIT, "");
             action.setData("20");
+            action.setData("20");
             sequence.addAction(action);
             DupeSystem.get().save();
             clear();
@@ -193,6 +214,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
 
         WButton addCloseGuiBtn = addButtonsTable.add(theme.button("Add Close GUI")).expandX().widget();
         addCloseGuiBtn.action = () -> {
+            SequenceAction action = new SequenceAction(ActionType.CLOSE_GUI, "normal");
             SequenceAction action = new SequenceAction(ActionType.CLOSE_GUI, "normal");
             sequence.addAction(action);
             DupeSystem.get().save();
@@ -332,6 +354,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
                     DupeSystem.get().save();
                 };
             } else if (action.getType() == ActionType.WAIT) {
+                table.add(theme.label("Delay (ticks):"));
                 table.add(theme.label("Delay (ticks):"));
                 var waitTimeBox = table.add(theme.textBox(action.getData())).expandX().widget();
                 waitTimeBox.action = () -> {

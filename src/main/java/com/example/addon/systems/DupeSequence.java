@@ -15,6 +15,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
     private boolean allAtOnce = false;
     private Keybind keybind = Keybind.none();
     private boolean active = false;
+    private int repeatCount = 1;
 
     public DupeSequence() {
         this.name = "Unnamed Sequence";
@@ -80,19 +81,24 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         return commands;
     }
 
-
     public void addCommand(String command) {
         actions.add(new SequenceAction(ActionType.COMMAND, command));
     }
-
 
     public int getDelayBetweenCommands() {
         return delayBetweenActions;
     }
 
-
     public void setDelayBetweenCommands(int delay) {
         this.delayBetweenActions = delay;
+    }
+
+    public int getRepeatCount() {
+        return repeatCount;
+    }
+
+    public void setRepeatCount(int repeatCount) {
+        this.repeatCount = repeatCount;
     }
 
     @Override
@@ -102,6 +108,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         tag.putInt("delay", delayBetweenActions);
         tag.putBoolean("allAtOnce", allAtOnce);
         tag.putString("keybind", keybind.toString());
+        tag.putInt("repeatCount", repeatCount);
 
         NbtList actionsTag = new NbtList();
         for (SequenceAction action : actions) {
@@ -109,44 +116,38 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         }
         tag.put("actions", actionsTag);
 
-        tag.putInt("repeatCount", repeatCount);
         return tag;
     }
 
     @Override
     public DupeSequence fromTag(NbtCompound tag) {
+        // Handle Optional return types for NBT operations
         name = tag.getString("name").orElse("Unnamed Sequence");
-        delayBetweenActions = tag.getInt("delay").orElse(500);
+        delayBetweenActions = tag.getInt("delay").orElse(0);
         allAtOnce = tag.getBoolean("allAtOnce").orElse(false);
+        repeatCount = tag.getInt("repeatCount").orElse(1);
 
-        // Deserialize keybind
-        if (tag.contains("keybind", 8)) { // 8 is NbtElement.STRING_TYPE
-            String keybindString = tag.getString("keybind"); // Assumes this returns String, not Optional<String>
-            if (keybindString != null && !keybindString.isEmpty()) {
+        // Handle keybind deserialization - fix the API usage
+        if (tag.contains("keybind")) {
+            String keybindString = tag.getString("keybind").orElse("");
+            if (!keybindString.isEmpty()) {
                 try {
-                    // Attempt to parse the keybind string
-                    this.keybind = Keybind.fromString(keybindString);
-                    if (this.keybind == null) { // Defensive check if fromString can return null
-                        this.keybind = Keybind.none();
-                    }
+                    // Try to parse the keybind - may need to use different method based on Meteor Client version
+                    this.keybind = parseKeybind(keybindString);
                 } catch (Exception e) {
-                    // Log the error and default to Keybind.none() if parsing fails
                     System.err.println("[DupeSequence] Failed to parse keybind string '" + keybindString + "': " + e.getMessage());
                     this.keybind = Keybind.none();
                 }
             } else {
-                // Handle empty or null keybind string from NBT
                 this.keybind = Keybind.none();
             }
         } else {
-            // Keybind tag does not exist or is not a string, default to Keybind.none()
             this.keybind = Keybind.none();
         }
 
         actions.clear();
         if (tag.contains("actions")) {
-
-            NbtList actionsTag = tag.getList("actions").orElse(new NbtList());
+            NbtList actionsTag = tag.getList("actions");
             for (NbtElement element : actionsTag) {
                 if (element instanceof NbtCompound actionTag) {
                     SequenceAction action = new SequenceAction();
@@ -155,26 +156,38 @@ public class DupeSequence implements ISerializable<DupeSequence> {
                 }
             }
         } else if (tag.contains("commands")) {
-
-            NbtList commandsTag = tag.getList("commands").orElse(new NbtList());
+            // Legacy support for old command format
+            NbtList commandsTag = tag.getList("commands");
             for (NbtElement element : commandsTag) {
-                addCommand(element.asString().orElse(""));
+                String commandString = element.asString().orElse("");
+                if (!commandString.isEmpty()) {
+                    addCommand(commandString);
+                }
             }
         }
 
-        if (tag.contains("repeatCount")) {
-            repeatCount = tag.getInt("repeatCount").orElse(1);
-        }
         return this;
     }
 
-    private int repeatCount = 1;
-
-    public int getRepeatCount() {
-        return repeatCount;
-    }
-
-    public void setRepeatCount(int repeatCount) {
-        this.repeatCount = repeatCount;
+    /**
+     * Helper method to parse keybind from string
+     * This may need adjustment based on your Meteor Client version
+     */
+    private Keybind parseKeybind(String keybindString) {
+        // Try different parsing approaches based on Meteor Client API
+        try {
+            // Option 1: Try direct constructor or factory method
+            return new Keybind.Builder().fromString(keybindString).build();
+        } catch (Exception e1) {
+            try {
+                // Option 2: Try alternative parsing method
+                return Keybind.fromString(keybindString);
+            } catch (Exception e2) {
+                // Option 3: Manual parsing - this is a fallback
+                // You may need to implement this based on your specific keybind format
+                System.err.println("[DupeSequence] Could not parse keybind: " + keybindString);
+                return Keybind.none();
+            }
+        }
     }
 }

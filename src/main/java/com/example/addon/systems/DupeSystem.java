@@ -2,6 +2,7 @@ package com.example.addon.systems;
 
 import meteordevelopment.meteorclient.systems.System;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import java.util.ArrayList;
@@ -27,12 +28,17 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
 
     public static DupeSystem get() {
         if (INSTANCE == null) INSTANCE = new DupeSystem();
+        if (INSTANCE == null) INSTANCE = new DupeSystem();
         return INSTANCE;
     }
 
     public void add(DupeSequence sequence) {
         sequences.add(sequence);
         save();
+    }
+
+    public void save() {
+        meteordevelopment.meteorclient.systems.Systems.add(this);
     }
 
     public void save() {
@@ -59,6 +65,15 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
     public DupeSystem fromTag(NbtCompound tag) {
         sequences.clear();
         if (tag.contains("sequences")) {
+            NbtList sequencesTag = (NbtList) tag.get("sequences");
+            if (sequencesTag != null) {
+                for (int i = 0; i < sequencesTag.size(); i++) {
+                    if (sequencesTag.get(i) instanceof NbtCompound compoundTag) {
+                        DupeSequence sequence = new DupeSequence();
+                        sequence.fromTag(compoundTag);
+                        sequences.add(sequence);
+                    }
+                }
             NbtList sequencesTag = (NbtList) tag.get("sequences");
             if (sequencesTag != null) {
                 for (int i = 0; i < sequencesTag.size(); i++) {
