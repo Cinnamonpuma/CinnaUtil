@@ -147,7 +147,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
 
         actions.clear();
         if (tag.contains("actions")) {
-            NbtList actionsTag = tag.getList("actions");
+            NbtList actionsTag = tag.getList("actions").orElse(new NbtList());
             for (NbtElement element : actionsTag) {
                 if (element instanceof NbtCompound actionTag) {
                     SequenceAction action = new SequenceAction();
@@ -157,7 +157,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
             }
         } else if (tag.contains("commands")) {
             // Legacy support for old command format
-            NbtList commandsTag = tag.getList("commands");
+            NbtList commandsTag = tag.getList("commands").orElse(new NbtList());
             for (NbtElement element : commandsTag) {
                 String commandString = element.asString().orElse("");
                 if (!commandString.isEmpty()) {
@@ -174,20 +174,62 @@ public class DupeSequence implements ISerializable<DupeSequence> {
      * This may need adjustment based on your Meteor Client version
      */
     private Keybind parseKeybind(String keybindString) {
-        // Try different parsing approaches based on Meteor Client API
-        try {
-            // Option 1: Try direct constructor or factory method
-            return new Keybind.Builder().fromString(keybindString).build();
-        } catch (Exception e1) {
-            try {
-                // Option 2: Try alternative parsing method
-                return Keybind.fromString(keybindString);
-            } catch (Exception e2) {
-                // Option 3: Manual parsing - this is a fallback
-                // You may need to implement this based on your specific keybind format
-                System.err.println("[DupeSequence] Could not parse keybind: " + keybindString);
-                return Keybind.none();
-            }
+        if (keybindString == null || keybindString.isEmpty() || keybindString.equalsIgnoreCase("none")) {
+            return Keybind.none();
         }
+
+        // Try to map common key names (like those from Keybind.toString()) to GLFW key codes.
+        // This is an attempt to reverse what Keybind.toString() might be doing.
+        // Example: if keybindString is "J", we look for GLFW.GLFW_KEY_J
+        // If keybindString is "LEFT_CONTROL", we look for GLFW.GLFW_KEY_LEFT_CONTROL
+        try {
+            String glfwKeyName = keybindString.toUpperCase();
+            if (!glfwKeyName.startsWith("GLFW_KEY_")) {
+                // Simple letters/numbers might just be the character itself (e.g., "J")
+                // or a descriptive name (e.g., "ESCAPE", "LEFT_CONTROL")
+                // We prepend "GLFW_KEY_" to match GLFW constant names.
+                if (glfwKeyName.length() == 1 && Character.isLetterOrDigit(glfwKeyName.charAt(0))) {
+                    glfwKeyName = "GLFW_KEY_" + glfwKeyName;
+                } else {
+                    // For names like "ESCAPE", "LEFT_CONTROL", they might already be part of the GLFW constant name
+                    // or need specific mapping. This is a heuristic.
+                    // We'll try to find a field in GLFW class that ends with the key name.
+                    // This part is more complex and might require a pre-defined map for accuracy.
+                    // For now, let's assume Keybind.toString() gives a name that can be directly used
+                    // or easily transformed into a GLFW constant name.
+                    // A simple heuristic: if it's a known descriptive name, try it directly with GLFW_KEY_ prefix.
+                    // This is still a guess without knowing Keybind.toString() exact output format.
+                    boolean foundMatch = false;
+                    for (java.lang.reflect.Field field : org.lwjgl.glfw.GLFW.class.getFields()) {
+                        if (field.getName().endsWith("_" + glfwKeyName)) {
+                            glfwKeyName = field.getName();
+                            foundMatch = true;
+                            break;
+                        }
+                    }
+                    if (!foundMatch && !glfwKeyName.startsWith("GLFW_KEY_")) {
+                         glfwKeyName = "GLFW_KEY_" + glfwKeyName; // Default attempt
+                    }
+                }
+            }
+
+            java.lang.reflect.Field field = org.lwjgl.glfw.GLFW.class.getField(glfwKeyName);
+            int keyCode = field.getInt(null);
+            return Keybind.fromKey(keyCode);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            // System.err.println("[DupeSequence] Failed to find GLFW key code for '" + keybindString + "' (tried as '" + keybindString.toUpperCase().replace(".", "_") + "'): " + e.getMessage());
+        } catch (Exception e) {
+            // System.err.println("[DupeSequence] Error resolving keybind '" + keybindString + "' via reflection: " + e.getMessage());
+        }
+
+        // Fallback: try to parse as an integer key code directly (if it was stored as such)
+        try {
+            int keyCode = Integer.parseInt(keybindString);
+            return Keybind.fromKey(keyCode);
+        } catch (NumberFormatException e) {
+            System.err.println("[DupeSequence] Failed to parse keybind string '" + keybindString + "' as integer, and GLFW name lookup also failed.");
+        }
+
+        return Keybind.none(); // Default to none if all parsing fails
     }
 }

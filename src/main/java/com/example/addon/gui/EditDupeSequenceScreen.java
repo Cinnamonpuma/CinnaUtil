@@ -16,6 +16,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
 
 public class EditDupeSequenceScreen extends WindowScreen {
+    private boolean settingKeybind = false;
     private final DupeSequence sequence;
     private final MinecraftClient mc = MinecraftClient.getInstance();
 
@@ -26,10 +27,9 @@ public class EditDupeSequenceScreen extends WindowScreen {
 
     @Override
     public void initWidgets() {
-
         WTable table = add(theme.table()).expandX().widget();
 
-
+        // Name
         table.add(theme.label("Name:"));
         var nameBox = table.add(theme.textBox(sequence.getName())).minWidth(400).expandX().widget();
         nameBox.action = () -> {
@@ -38,7 +38,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
-
+        // Delay
         table.add(theme.label("Delay (ticks):"));
         var delayEdit = table.add(theme.textBox(Integer.toString(sequence.getDelayBetweenActions()))).expandX().widget();
         delayEdit.action = () -> {
@@ -49,14 +49,13 @@ public class EditDupeSequenceScreen extends WindowScreen {
                     DupeSystem.get().save();
                 }
             } catch (NumberFormatException e) {
-
+                // Invalid input, ignore
             }
         };
         table.row();
 
-
+        // All at once checkbox
         table.add(theme.label("Execute all at once:"));
-        var allAtOnceCheckbox = table.add(theme.checkbox(sequence.isAllAtOnce())).widget();
         var allAtOnceCheckbox = table.add(theme.checkbox(sequence.isAllAtOnce())).widget();
         allAtOnceCheckbox.action = () -> {
             sequence.setAllAtOnce(allAtOnceCheckbox.checked);
@@ -64,7 +63,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
-
+        // Repeat count
         table.add(theme.label("Repeat Count:"));
         var repeatCountEdit = table.add(theme.textBox(Integer.toString(sequence.getRepeatCount()))).expandX().widget();
         repeatCountEdit.action = () -> {
@@ -75,24 +74,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
                     DupeSystem.get().save();
                 }
             } catch (NumberFormatException e) {
-
-            }
-        };
-        table.row();
-
-        // Keybind
-        table.add(theme.label("Keybind:"));
-        var keybindWidget = table.add(theme.keybind(sequence.getKeybind())).expandX().widget();
-        keybindWidget.action = () -> {
-            meteordevelopment.meteorclient.utils.misc.Keybind currentKeybind = keybindWidget.get();
-            if (currentKeybind != null) {
-                sequence.setKeybind(currentKeybind);
-                DupeSystem.get().save();
-            } else {
-                // Optional: Handle case where keybind might be null if `get()` can return that
-                // For now, we assume `get()` returns a valid Keybind or one representing 'none'
-                // If it can be truly null and that's an issue for sequence.setKeybind,
-                // then sequence.setKeybind(Keybind.none()) might be an alternative here.
+                // Invalid input, ignore
             }
         };
         table.row();
@@ -106,30 +88,29 @@ public class EditDupeSequenceScreen extends WindowScreen {
         var setKeybindBtn = table.add(theme.button("Set Keybind")).widget();
         setKeybindBtn.action = () -> {
             // For now, just show that keybind functionality needs to be implemented
-            // You would need to implement a custom keybind setting dialog
-            // or use the proper Meteor Client keybind widget if available
+            settingKeybind = true;
+            keybindLabel.set("Press a key..."); // Use set() instead of setRenderText()
         };
         table.row();
 
+        // Actions section
         var actionsSection = table.add(theme.section("Actions")).expandX().widget();
         var actionsTable = actionsSection.add(theme.table()).expandX().widget();
 
-
+        // Display existing actions
         for (int i = 0; i < sequence.getActions().size(); i++) {
             final int index = i;
             SequenceAction action = sequence.getActions().get(i);
 
-
             WTable actionRow = actionsTable.add(theme.table()).expandX().widget();
 
-
+            // Action label
             String actionLabel;
             if (action.getType() == ActionType.COMMAND) {
                 actionLabel = "Command: " + action.getData();
             } else if (action.getType() == ActionType.PACKET) {
                 actionLabel = "Packet: Slot " + action.getSlot() + (action.getRepeatCount() > 1 ? " (x" + action.getRepeatCount() + ")" : "");
             } else if (action.getType() == ActionType.WAIT) {
-                actionLabel = "Wait: " + action.getData() + "ticks";
                 actionLabel = "Wait: " + action.getData() + "ticks";
             } else if (action.getType() == ActionType.CLOSE_GUI) {
                 actionLabel = "Close GUI: " + (action.getData().equals("desync") ? "Desync" : "Normal");
@@ -179,6 +160,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
             actionsTable.row();
         }
 
+        // Add action buttons
         WTable addButtonsTable = actionsTable.add(theme.table()).expandX().widget();
 
         WButton addCmdBtn = addButtonsTable.add(theme.button("Add Command")).expandX().widget();
@@ -205,7 +187,6 @@ public class EditDupeSequenceScreen extends WindowScreen {
         addWaitBtn.action = () -> {
             SequenceAction action = new SequenceAction(ActionType.WAIT, "");
             action.setData("20");
-            action.setData("20");
             sequence.addAction(action);
             DupeSystem.get().save();
             clear();
@@ -215,7 +196,6 @@ public class EditDupeSequenceScreen extends WindowScreen {
         WButton addCloseGuiBtn = addButtonsTable.add(theme.button("Add Close GUI")).expandX().widget();
         addCloseGuiBtn.action = () -> {
             SequenceAction action = new SequenceAction(ActionType.CLOSE_GUI, "normal");
-            SequenceAction action = new SequenceAction(ActionType.CLOSE_GUI, "normal");
             sequence.addAction(action);
             DupeSystem.get().save();
             clear();
@@ -223,23 +203,19 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
+        // Start/Stop sequence button
         String buttonText = "Start Sequence";
-        // Assuming DupeSystem.get().getCurrentSequence() will be implemented
-        // For now, using DupeSystem.isRunningSequence as a placeholder to determine if *this* sequence is running.
-        // This will need adjustment when getCurrentSequence() is available.
-        if (DupeSystem.isRunningSequence /* && DupeSystem.get().getCurrentSequence() == sequence */) {
+        if (DupeSystem.isRunningSequence && DupeSystem.getCurrentSequence() == sequence) {
             buttonText = "Stop Sequence";
         }
         WButton testBtn = table.add(theme.button(buttonText)).expandX().widget();
         testBtn.action = () -> {
-            // Same placeholder logic as above for determining if *this* sequence is running
-            if (DupeSystem.isRunningSequence /* && DupeSystem.get().getCurrentSequence() == sequence */) {
+            if (DupeSystem.isRunningSequence && DupeSystem.getCurrentSequence() == sequence) {
                 DupeSystem.stopCurrentSequence();
             } else {
-                // Pass the current sequence and its repeat count to the execution method
                 DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
             }
-            clear(); // Re-initialize widgets to update button text
+            clear();
             initWidgets();
         };
 
@@ -247,29 +223,18 @@ public class EditDupeSequenceScreen extends WindowScreen {
         backBtn.action = () -> mc.setScreen(new DupeSequencesScreen(theme));
     }
 
-    private void runSequenceWithRepeat(DupeSequence sequence, int repeatCount) {
-        DupeSystem.executeSequence(sequence, repeatCount);
-    }
-
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        super.keyPressed(keyCode, scanCode, modifiers); // Let super handle Escape, etc.
-
-        if (sequence.getKeybind().matches(true, keyCode, scanCode)) {
-            // Assuming DupeSystem.isRunningSequence correctly reflects if *any* sequence is running.
-            // And that we want to stop *any* sequence if this keybind is pressed,
-            // or start this one if no sequence is running.
-            // A more precise check would involve DupeSystem.getCurrentSequence() == sequence.
-            if (DupeSystem.isRunningSequence) { // Simplified check
-                DupeSystem.stopCurrentSequence();
-            } else {
-                DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
-            }
-            clear(); // Re-initialize widgets to update button text or other UI elements
+        if (settingKeybind) {
+            sequence.setKeybind(Keybind.fromKey(keyCode));
+            DupeSystem.get().save();
+            settingKeybind = false;
+            // Re-initialize widgets to update the keybind label
+            clear();
             initWidgets();
-            return true; // Keybind was handled
+            return true;
         }
-        return false; // Keybind not handled by this screen
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     private class EditActionScreen extends WindowScreen {
@@ -332,7 +297,6 @@ public class EditDupeSequenceScreen extends WindowScreen {
                 };
                 table.row();
 
-
                 table.add(theme.label("Send At Once Count:"));
                 var sendAtOnceCountBox = table.add(theme.textBox(Integer.toString(action.getRepeatCount()))).expandX().widget();
                 sendAtOnceCountBox.action = () -> {
@@ -355,7 +319,6 @@ public class EditDupeSequenceScreen extends WindowScreen {
                 };
             } else if (action.getType() == ActionType.WAIT) {
                 table.add(theme.label("Delay (ticks):"));
-                table.add(theme.label("Delay (ticks):"));
                 var waitTimeBox = table.add(theme.textBox(action.getData())).expandX().widget();
                 waitTimeBox.action = () -> {
                     try {
@@ -368,7 +331,6 @@ public class EditDupeSequenceScreen extends WindowScreen {
                     }
                 };
             } else if (action.getType() == ActionType.CLOSE_GUI) {
-
                 table.add(theme.label("Close Type:"));
                 String[] options = {"normal", "desync"};
                 String currentValue = action.getData();
@@ -383,7 +345,6 @@ public class EditDupeSequenceScreen extends WindowScreen {
                 };
             }
             table.row();
-
 
             WButton doneBtn = table.add(theme.button("Done")).expandX().widget();
             doneBtn.action = () -> {

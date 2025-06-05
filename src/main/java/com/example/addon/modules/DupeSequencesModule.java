@@ -37,19 +37,50 @@ public class DupeSequencesModule extends Module {
     );
 
     public DupeSequencesModule() {
-        super(CinnaUtil.CATEGORY, "Dupe Sequences", "Manage dupe sequences.");
+        super(CinnaUtil.CATEGORY, "DupeSequences", "Manage dupe sequences.");
     }
 
     @EventHandler
     private void onKey(KeyEvent event) {
-        if (!isActive()) return;
+        if (!isActive() || mc.currentScreen != null) return; // Added check for mc.currentScreen
 
-        if (stopKey.get().matches(true, event.key, 0)) {
+        // Handle stop key for any running sequence
+        if (stopKey.get().matches(true, event.key, 0)) { // Reverted to matches
+            info("Stop key pressed.");
             if (DupeSystem.isRunningSequence) {
                 DupeSystem.stopCurrentSequence();
                 if (showStopMessage.get()) {
-                    info("Stopped running sequence");
+                    info("Stopped running sequence via stop-key");
                 }
+            } else {
+                info("No sequence running to stop.");
+            }
+        }
+
+        // Handle keybind for dupe sequences
+        for (com.example.addon.systems.DupeSequence sequence : DupeSystem.get()) {
+            if (sequence.getKeybind() != null && sequence.getKeybind().matches(true, event.key, 0)) { // Reverted to matches
+                info("Keybind pressed for sequence: " + sequence.getName());
+                if (DupeSystem.isRunningSequence) {
+                    if (DupeSystem.getCurrentSequence() == sequence) {
+                        // Pressed keybind of currently running sequence: stop it
+                        DupeSystem.stopCurrentSequence();
+                        if (showStopMessage.get()) {
+                            info("Stopped sequence: " + sequence.getName());
+                        }
+                    } else {
+                        // Pressed keybind of a *different* sequence: stop current, start new
+                        info("Stopping current sequence ('" + DupeSystem.getCurrentSequence().getName() + "') to start new sequence ('" + sequence.getName() + "').");
+                        DupeSystem.stopCurrentSequence();
+                        DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
+                        info("Started sequence: " + sequence.getName());
+                    }
+                } else {
+                    // No sequence running: start this one
+                    DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
+                    info("Started sequence: " + sequence.getName());
+                }
+                return; // Process only the first matching sequence keybind
             }
         }
     }
