@@ -106,7 +106,7 @@ public class SequenceAction implements ISerializable<SequenceAction> {
         try {
             // Load action type with fallback - Fixed valueOf call
             if (tag.contains("type")) {
-                String typeString = tag.getString("type");
+                String typeString = tag.getString("type").orElse("");
                 try {
                     this.type = ActionType.valueOf(typeString);
                 } catch (IllegalArgumentException e) {
@@ -118,33 +118,33 @@ public class SequenceAction implements ISerializable<SequenceAction> {
 
             // Load data - Fixed getString call
             if (tag.contains("data")) {
-                this.data = tag.getString("data");
+                this.data = tag.getString("data").orElse("");
             } else {
                 this.data = "";
             }
 
             // Load numeric values - Fixed getInt calls
             if (tag.contains("slot")) {
-                this.slot = tag.getInt("slot");
+                this.slot = tag.getInt("slot").orElse(0);
             } else {
                 this.slot = -1;
             }
 
             if (tag.contains("count")) {
-                this.count = Math.max(1, tag.getInt("count"));
+                this.count = Math.max(1, tag.getInt("count").orElse(1));
             } else {
                 this.count = 1;
             }
 
             if (tag.contains("repeatCount")) {
-                this.repeatCount = Math.max(1, tag.getInt("repeatCount"));
+                this.repeatCount = Math.max(1, tag.getInt("repeatCount").orElse(1));
             } else {
                 this.repeatCount = 1;
             }
 
             // Load slot action type - Fixed valueOf call
             if (tag.contains("slotActionType")) {
-                String slotActionTypeString = tag.getString("slotActionType");
+                String slotActionTypeString = tag.getString("slotActionType").orElse("");
                 try {
                     this.slotActionType = SlotActionType.valueOf(slotActionTypeString);
                 } catch (IllegalArgumentException e) {

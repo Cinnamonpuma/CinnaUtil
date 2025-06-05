@@ -4,6 +4,7 @@ import meteordevelopment.meteorclient.systems.System;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtElement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -62,7 +63,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
             meteordevelopment.meteorclient.systems.Systems.add(this);
         } catch (Exception e) {
             // Fixed System.err reference
-            System.err.println("Failed to save DupeSystem: " + e.getMessage());
+            java.lang.System.out.println("Failed to save DupeSystem: " + e.getMessage());
         }
     }
 
@@ -83,7 +84,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
             tag.put("sequences", sequencesTag);
         } catch (Exception e) {
             // Fixed System.err reference
-            System.err.println("Error serializing DupeSystem: " + e.getMessage());
+            java.lang.System.out.println("Error serializing DupeSystem: " + e.getMessage());
         }
         
         return tag;
@@ -95,13 +96,17 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
         
         try {
             if (tag.contains("sequences")) {
-                // Fixed getList call - remove second parameter for 1.21.5
-                NbtList sequencesTag = tag.getList("sequences", 10); // 10 = NbtCompound type
+                // Fixed getList call - use single parameter for 1.21.5
+                NbtList sequencesTag = (NbtList) tag.get("sequences");
+                if (sequencesTag.size() > 0) {
+                NbtCompound compoundTag = (NbtCompound) sequencesTag.get(0);
+    // Continue with your logic
+}
                 
                 for (int i = 0; i < sequencesTag.size(); i++) {
                     try {
                         // Fixed getCompound call - use direct method
-                        NbtCompound compoundTag = sequencesTag.getCompound(i);
+                        NbtCompound compoundTag = sequencesTag.getCompound(i).orElse(new NbtCompound());
                         if (compoundTag != null) {
                             DupeSequence sequence = new DupeSequence();
                             sequence.fromTag(compoundTag);
@@ -109,13 +114,13 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                         }
                     } catch (Exception e) {
                         // Fixed System.err reference
-                        System.err.println("Error loading sequence " + i + ": " + e.getMessage());
+                        java.lang.System.out.println("Error loading sequence " + i + ": " + e.getMessage());
                     }
                 }
             }
         } catch (Exception e) {
             // Fixed System.err reference
-            System.err.println("Error deserializing DupeSystem: " + e.getMessage());
+            java.lang.System.out.println("Error deserializing DupeSystem: " + e.getMessage());
         }
         
         return this;
@@ -167,7 +172,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                     // Thread was interrupted, clean exit
                 } catch (Exception e) {
                     // Fixed System.err reference
-                    System.err.println("Error executing sequence: " + e.getMessage());
+                    java.lang.System.out.println("Error executing sequence: " + e.getMessage());
                 } finally {
                     // Cleanup
                     isRunningSequence.set(false);
@@ -239,10 +244,10 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
         
         long waitTimeMs = ticks * TICK_DURATION_MS;
         // Fixed System.currentTimeMillis() references
-        long endTime = System.currentTimeMillis() + waitTimeMs;
+        long endTime = java.lang.System.currentTimeMillis() + waitTimeMs;
         
-        while (System.currentTimeMillis() < endTime && isRunningSequence.get()) {
-            Thread.sleep(Math.min(10, endTime - System.currentTimeMillis()));
+        while (java.lang.System.currentTimeMillis() < endTime && isRunningSequence.get()) {
+            Thread.sleep(Math.min(10, endTime - java.lang.System.currentTimeMillis()));
         }
         
         if (!isRunningSequence.get()) {
@@ -257,12 +262,12 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                     executeAction(action);
                 } catch (Exception e) {
                     // Fixed System.err reference
-                    System.err.println("Error executing action: " + e.getMessage());
+                    java.lang.System.out.println("Error executing action: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
             // Fixed System.err reference
-            System.err.println("Error scheduling action: " + e.getMessage());
+            java.lang.System.out.println("Error scheduling action: " + e.getMessage());
         }
     }
 
@@ -285,7 +290,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                 break;
             default:
                 // Fixed System.err reference
-                System.err.println("Unknown action type: " + action.getType());
+                java.lang.System.out.println("Unknown action type: " + action.getType());
                 break;
         }
     }
@@ -324,7 +329,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                 );
             } catch (Exception e) {
                 // Fixed System.err reference
-                System.err.println("Error clicking slot: " + e.getMessage());
+                java.lang.System.out.println("Error clicking slot: " + e.getMessage());
                 break;
             }
         }

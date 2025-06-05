@@ -132,25 +132,25 @@ public class DupeSequence implements ISerializable<DupeSequence> {
     public DupeSequence fromTag(NbtCompound tag) {
         // Fixed NBT deserialization - use direct methods instead of Optional
         if (tag.contains("name")) {
-            name = tag.getString("name");
+            name = tag.getString("name").orElse("");
         } else {
             name = "Unnamed Sequence";
         }
         
         if (tag.contains("delay")) {
-            delayBetweenActions = tag.getInt("delay");
+            tag.getInt("delay").orElse(0); 
         } else {
             delayBetweenActions = 0;
         }
         
         if (tag.contains("allAtOnce")) {
-            allAtOnce = tag.getBoolean("allAtOnce");
+            allAtOnce = tag.getBoolean("allAtOnce").orElse(false);
         } else {
             allAtOnce = false;
         }
         
         if (tag.contains("repeatCount")) {
-            repeatCount = tag.getInt("repeatCount");
+            repeatCount = tag.getInt("repeatCount").orElse(1);
         } else {
             repeatCount = 1;
         }
@@ -158,11 +158,11 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         // Fixed keybind deserialization
         if (tag.contains("keybind")) {
             try {
-                NbtCompound keybindTag = tag.getCompound("keybind");
-                this.keybind = new Keybind();
+                NbtCompound keybindTag = tag.getCompound("keybind").orElse(new NbtCompound());
+                this.keybind = Keybind.none();
                 this.keybind.fromTag(keybindTag);
             } catch (Exception e) {
-                System.err.println("[DupeSequence] Failed to deserialize keybind: " + e.getMessage());
+                java.lang.System.out.println("[DupeSequence] Failed to deserialize keybind: " + e.getMessage());
                 this.keybind = Keybind.none();
             }
         } else {
@@ -178,7 +178,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         if (tag.contains("actions")) {
             try {
                 // Fixed getList call - use single parameter
-                NbtList actionsTag = tag.getList("actions", NbtElement.COMPOUND_TYPE);
+                NbtList actionsTag = tag.getList("actions").orElse(new NbtList());
                 for (NbtElement element : actionsTag) {
                     if (element instanceof NbtCompound actionTag) {
                         SequenceAction action = new SequenceAction();
@@ -187,22 +187,22 @@ public class DupeSequence implements ISerializable<DupeSequence> {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("[DupeSequence] Failed to deserialize actions: " + e.getMessage());
+                java.lang.System.out.println("[DupeSequence] Failed to deserialize actions: " + e.getMessage());
             }
         } else if (tag.contains("commands")) {
             // Legacy support for old command format
             try {
                 // Fixed getList call - use single parameter
-                NbtList commandsTag = tag.getList("commands", NbtElement.STRING_TYPE);
+                NbtList commandsTag = tag.getList("commands").orElse(new NbtList());
                 for (NbtElement element : commandsTag) {
                     // Fixed asString call - use direct method
-                    String commandString = element.asString();
+                    String commandString = element.asString().orElse("");
                     if (commandString != null && !commandString.isEmpty()) {
                         addCommand(commandString);
                     }
                 }
             } catch (Exception e) {
-                System.err.println("[DupeSequence] Failed to deserialize legacy commands: " + e.getMessage());
+                java.lang.System.out.println("[DupeSequence] Failed to deserialize legacy commands: " + e.getMessage());
             }
         }
 

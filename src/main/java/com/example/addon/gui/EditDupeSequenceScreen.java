@@ -9,6 +9,7 @@ import meteordevelopment.meteorclient.gui.WindowScreen;
 import meteordevelopment.meteorclient.gui.widgets.containers.WTable;
 import meteordevelopment.meteorclient.gui.widgets.pressable.WButton;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
+import meteordevelopment.meteorclient.gui.widgets.WLabel;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
@@ -18,7 +19,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
     private boolean settingKeybind = false;
     private final DupeSequence sequence;
     private final MinecraftClient mc = MinecraftClient.getInstance();
-    private WWidget keybindLabel;
+    private WLabel keybindLabel;
 
     public EditDupeSequenceScreen(GuiTheme theme, DupeSequence sequence) {
         super(theme, "Edit Sequence");
@@ -184,12 +185,12 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
-        // Start/Stop sequence button
-        String buttonText = (DupeSystem.isRunningSequence && DupeSystem.getCurrentSequence() == sequence) 
+        // Start/Stop sequence button - FIXED AtomicBoolean usage
+        String buttonText = (DupeSystem.isRunningSequence.get() && DupeSystem.getCurrentSequence() == sequence) 
             ? "Stop Sequence" : "Start Sequence";
         WButton testBtn = table.add(theme.button(buttonText)).expandX().widget();
         testBtn.action = () -> {
-            if (DupeSystem.isRunningSequence && DupeSystem.getCurrentSequence() == sequence) {
+            if (DupeSystem.isRunningSequence.get() && DupeSystem.getCurrentSequence() == sequence) {
                 DupeSystem.stopCurrentSequence();
             } else {
                 DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
@@ -209,10 +210,8 @@ public class EditDupeSequenceScreen extends WindowScreen {
     }
 
     private void updateKeybindDisplay() {
-        if (keybindLabel != null) {
-            keybindLabel.set(getKeybindDisplayText());
-        }
-    }
+        refreshUI();
+     }
 
     private String getActionDisplayText(SequenceAction action) {
         switch (action.getType()) {
