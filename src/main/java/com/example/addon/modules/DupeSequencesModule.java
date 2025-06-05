@@ -10,16 +10,21 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 import com.example.addon.systems.DupeSystem;
 import net.minecraft.client.MinecraftClient;
 import meteordevelopment.meteorclient.events.meteor.KeyEvent;
+// import meteordevelopment.meteorclient.utils.keyboard.KeyAction; // Removed import
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.KeybindSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
+// import meteordevelopment.meteorclient.utils.misc.KeyAction; // Removed import
 import meteordevelopment.orbit.EventHandler;
 import org.lwjgl.glfw.GLFW;
+// import org.slf4j.Logger; // Removed import
+// import org.slf4j.LoggerFactory; // Removed import
 
 
 public class DupeSequencesModule extends Module {
+    // private static final Logger LOG = LoggerFactory.getLogger(DupeSequencesModule.class); // Removed logger instance
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
     private final Setting<Keybind> stopKey = sgGeneral.add(new KeybindSetting.Builder()
@@ -37,7 +42,7 @@ public class DupeSequencesModule extends Module {
     );
 
     public DupeSequencesModule() {
-        super(CinnaUtil.CATEGORY, "DupeSequences", "Manage dupe sequences.");
+        super(CinnaUtil.CATEGORY, "DupeSequences(TURN ON)", "Manage dupe sequences.");
     }
 
     @EventHandler
@@ -46,6 +51,7 @@ public class DupeSequencesModule extends Module {
         if (!isActive() || mc == null || mc.currentScreen != null) {
             return;
         }
+        // LOG.info("onKey event: key={}, action={}, stopKey={}", event.key, event.action, stopKey.get()); // Removed log
 
         try {
             // Handle stop key for any running sequence
@@ -70,7 +76,12 @@ public class DupeSequencesModule extends Module {
             }
 
             // Use proper keybind matching - check if this is the correct API for your Meteor version
-            if (stopKeybind.isPressed()) {
+            // Assuming the first boolean in matches(boolean, int, int) handles the press/release check.
+            // LOG.info("handleStopKey: checking stopKeybind={}, event.key={}, event.action={}", stopKeybind, event.key, event.action); // Removed log
+            // LOG.info("handleStopKey: calling stopKeybind.matches(true, key={}, 0)", event.key); // Removed log
+            boolean stopMatch = stopKeybind.matches(true, event.key, 0);
+            // LOG.info("handleStopKey: result: {}", stopMatch); // Removed log
+            if (stopMatch) {
                 info("Stop key pressed.");
                 if (DupeSystem.isRunningSequence.get()) {
                     DupeSystem.stopCurrentSequence();
@@ -106,7 +117,12 @@ public class DupeSequencesModule extends Module {
                 }
 
                 // Use proper keybind matching
-                if (sequenceKeybind.isPressed()) {
+                // Assuming the first boolean in matches(boolean, int, int) handles the press/release check.
+                // LOG.info("handleSequenceKeybinds: checking sequence '{}', keybind={}, event.key={}, event.action={}", sequence.getName(), sequenceKeybind, event.key, event.action); // Removed log
+                // LOG.info("handleSequenceKeybinds: calling sequenceKeybind.matches(true, key={}, 0) for sequence '{}'", event.key, sequence.getName()); // Removed log
+                boolean sequenceMatch = sequenceKeybind.matches(true, event.key, 0);
+                // LOG.info("handleSequenceKeybinds: result: {}", sequenceMatch); // Removed log
+                if (sequenceMatch) {
                     info("Keybind pressed for sequence: " + sequence.getName());
                     
                     if (DupeSystem.isRunningSequence.get()) {
@@ -126,16 +142,18 @@ public class DupeSequencesModule extends Module {
     private void handleRunningSequenceKeybind(com.example.addon.systems.DupeSequence sequence) {
         try {
             com.example.addon.systems.DupeSequence currentSequence = DupeSystem.getCurrentSequence();
-            
+
             if (currentSequence == sequence) {
-                // Pressed keybind of currently running sequence: stop it
-                DupeSystem.stopCurrentSequence();
-                if (showStopMessage.get()) {
-                    info("Stopped sequence: " + sequence.getName());
-                }
+                // Keybind pressed is for the currently running sequence. Do nothing.
+                // User wants this to not stop the sequence.
+                return; 
             } else {
-                // Pressed keybind of a different sequence: stop current, start new
-                String currentName = currentSequence != null ? currentSequence.getName() : "Unknown";
+                // Keybind pressed is for a different sequence. Stop current, start new.
+                // Ensure currentSequence is not null before trying to get its name
+                String currentName = "Unknown";
+                if (currentSequence != null) {
+                    currentName = currentSequence.getName();
+                }
                 info("Stopping current sequence ('" + currentName + "') to start new sequence ('" + sequence.getName() + "').");
                 
                 DupeSystem.stopCurrentSequence();
@@ -143,6 +161,8 @@ public class DupeSequencesModule extends Module {
             }
         } catch (Exception e) {
             error("Error handling running sequence keybind: " + e.getMessage());
+            // It's good practice to print the stack trace for better debugging from user logs if errors occur
+            e.printStackTrace(); // Consider adding this if not already standard in error()
         }
     }
 
