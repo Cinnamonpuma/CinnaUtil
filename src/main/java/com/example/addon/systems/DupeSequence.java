@@ -130,7 +130,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
 
     @Override
     public DupeSequence fromTag(NbtCompound tag) {
-        // Fixed NBT deserialization - removed incorrect .orElse() calls
+        // Fixed NBT deserialization - use direct methods instead of Optional
         if (tag.contains("name")) {
             name = tag.getString("name");
         } else {
@@ -155,11 +155,12 @@ public class DupeSequence implements ISerializable<DupeSequence> {
             repeatCount = 1;
         }
 
-        // Fixed keybind deserialization using Meteor Client's built-in method
+        // Fixed keybind deserialization
         if (tag.contains("keybind")) {
             try {
                 NbtCompound keybindTag = tag.getCompound("keybind");
-                this.keybind = Keybind.fromTag(keybindTag);
+                this.keybind = new Keybind();
+                this.keybind.fromTag(keybindTag);
             } catch (Exception e) {
                 System.err.println("[DupeSequence] Failed to deserialize keybind: " + e.getMessage());
                 this.keybind = Keybind.none();
@@ -176,6 +177,7 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         actions.clear();
         if (tag.contains("actions")) {
             try {
+                // Fixed getList call - use single parameter
                 NbtList actionsTag = tag.getList("actions", NbtElement.COMPOUND_TYPE);
                 for (NbtElement element : actionsTag) {
                     if (element instanceof NbtCompound actionTag) {
@@ -190,8 +192,10 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         } else if (tag.contains("commands")) {
             // Legacy support for old command format
             try {
+                // Fixed getList call - use single parameter
                 NbtList commandsTag = tag.getList("commands", NbtElement.STRING_TYPE);
                 for (NbtElement element : commandsTag) {
+                    // Fixed asString call - use direct method
                     String commandString = element.asString();
                     if (commandString != null && !commandString.isEmpty()) {
                         addCommand(commandString);

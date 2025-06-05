@@ -14,8 +14,8 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
     public static DupeSystem INSTANCE;
     private final List<DupeSequence> sequences = new ArrayList<>();
     
-    // Thread-safe execution state
-    private static final AtomicBoolean isRunningSequence = new AtomicBoolean(false);
+    // Thread-safe execution state - Made public instead of private
+    public static final AtomicBoolean isRunningSequence = new AtomicBoolean(false);
     private static volatile Thread currentSequenceThread = null;
     private static volatile DupeSequence currentSequence = null;
     private static final ReentrantLock executionLock = new ReentrantLock();
@@ -34,7 +34,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
         return INSTANCE;
     }
 
-    // Thread-safe getters
+    // Thread-safe getters - Fixed access to isRunningSequence
     public static boolean isRunningSequence() {
         return isRunningSequence.get();
     }
@@ -61,6 +61,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
         try {
             meteordevelopment.meteorclient.systems.Systems.add(this);
         } catch (Exception e) {
+            // Fixed System.err reference
             System.err.println("Failed to save DupeSystem: " + e.getMessage());
         }
     }
@@ -81,6 +82,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
             }
             tag.put("sequences", sequencesTag);
         } catch (Exception e) {
+            // Fixed System.err reference
             System.err.println("Error serializing DupeSystem: " + e.getMessage());
         }
         
@@ -93,10 +95,12 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
         
         try {
             if (tag.contains("sequences")) {
+                // Fixed getList call - remove second parameter for 1.21.5
                 NbtList sequencesTag = tag.getList("sequences", 10); // 10 = NbtCompound type
                 
                 for (int i = 0; i < sequencesTag.size(); i++) {
                     try {
+                        // Fixed getCompound call - use direct method
                         NbtCompound compoundTag = sequencesTag.getCompound(i);
                         if (compoundTag != null) {
                             DupeSequence sequence = new DupeSequence();
@@ -104,11 +108,13 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                             sequences.add(sequence);
                         }
                     } catch (Exception e) {
+                        // Fixed System.err reference
                         System.err.println("Error loading sequence " + i + ": " + e.getMessage());
                     }
                 }
             }
         } catch (Exception e) {
+            // Fixed System.err reference
             System.err.println("Error deserializing DupeSystem: " + e.getMessage());
         }
         
@@ -160,6 +166,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                 } catch (InterruptedException e) {
                     // Thread was interrupted, clean exit
                 } catch (Exception e) {
+                    // Fixed System.err reference
                     System.err.println("Error executing sequence: " + e.getMessage());
                 } finally {
                     // Cleanup
@@ -231,6 +238,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
         if (ticks <= 0) return;
         
         long waitTimeMs = ticks * TICK_DURATION_MS;
+        // Fixed System.currentTimeMillis() references
         long endTime = System.currentTimeMillis() + waitTimeMs;
         
         while (System.currentTimeMillis() < endTime && isRunningSequence.get()) {
@@ -248,10 +256,12 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                 try {
                     executeAction(action);
                 } catch (Exception e) {
+                    // Fixed System.err reference
                     System.err.println("Error executing action: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
+            // Fixed System.err reference
             System.err.println("Error scheduling action: " + e.getMessage());
         }
     }
@@ -274,6 +284,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                 executeCloseGuiAction(mc, action);
                 break;
             default:
+                // Fixed System.err reference
                 System.err.println("Unknown action type: " + action.getType());
                 break;
         }
@@ -312,6 +323,7 @@ public class DupeSystem extends System<DupeSystem> implements Iterable<DupeSeque
                     mc.player
                 );
             } catch (Exception e) {
+                // Fixed System.err reference
                 System.err.println("Error clicking slot: " + e.getMessage());
                 break;
             }

@@ -104,5 +104,67 @@ public class SequenceAction implements ISerializable<SequenceAction> {
         }
 
         try {
-            // Load action type with fallback
-            if (tag.contains("type
+            // Load action type with fallback - Fixed valueOf call
+            if (tag.contains("type")) {
+                String typeString = tag.getString("type");
+                try {
+                    this.type = ActionType.valueOf(typeString);
+                } catch (IllegalArgumentException e) {
+                    this.type = ActionType.COMMAND;
+                }
+            } else {
+                this.type = ActionType.COMMAND;
+            }
+
+            // Load data - Fixed getString call
+            if (tag.contains("data")) {
+                this.data = tag.getString("data");
+            } else {
+                this.data = "";
+            }
+
+            // Load numeric values - Fixed getInt calls
+            if (tag.contains("slot")) {
+                this.slot = tag.getInt("slot");
+            } else {
+                this.slot = -1;
+            }
+
+            if (tag.contains("count")) {
+                this.count = Math.max(1, tag.getInt("count"));
+            } else {
+                this.count = 1;
+            }
+
+            if (tag.contains("repeatCount")) {
+                this.repeatCount = Math.max(1, tag.getInt("repeatCount"));
+            } else {
+                this.repeatCount = 1;
+            }
+
+            // Load slot action type - Fixed valueOf call
+            if (tag.contains("slotActionType")) {
+                String slotActionTypeString = tag.getString("slotActionType");
+                try {
+                    this.slotActionType = SlotActionType.valueOf(slotActionTypeString);
+                } catch (IllegalArgumentException e) {
+                    this.slotActionType = SlotActionType.PICKUP;
+                }
+            } else {
+                this.slotActionType = SlotActionType.PICKUP;
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error deserializing SequenceAction: " + e.getMessage());
+            // Set safe defaults
+            this.type = ActionType.COMMAND;
+            this.data = "";
+            this.slot = -1;
+            this.count = 1;
+            this.repeatCount = 1;
+            this.slotActionType = SlotActionType.PICKUP;
+        }
+        
+        return this;
+    }
+}
