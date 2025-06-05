@@ -72,7 +72,7 @@ public class DupeSequencesModule extends Module {
             // Use proper keybind matching - check if this is the correct API for your Meteor version
             if (stopKeybind.isPressed()) {
                 info("Stop key pressed.");
-                if (DupeSystem.isRunningSequence) {
+                if (DupeSystem.isRunningSequence.get()) {
                     DupeSystem.stopCurrentSequence();
                     if (showStopMessage.get()) {
                         info("Stopped running sequence via stop-key");
@@ -109,7 +109,7 @@ public class DupeSequencesModule extends Module {
                 if (sequenceKeybind.isPressed()) {
                     info("Keybind pressed for sequence: " + sequence.getName());
                     
-                    if (DupeSystem.isRunningSequence) {
+                    if (DupeSystem.isRunningSequence.get()) {
                         handleRunningSequenceKeybind(sequence);
                     } else {
                         // No sequence running: start this one
@@ -182,7 +182,7 @@ public class DupeSequencesModule extends Module {
             };
 
             // Conditionally show stop button if sequence is running
-            if (DupeSystem.isRunningSequence) {
+            if (DupeSystem.isRunningSequence.get()) {
                 WButton stopBtn = table.add(theme.button("Stop Sequence")).expandX().widget();
                 stopBtn.action = () -> {
                     try {

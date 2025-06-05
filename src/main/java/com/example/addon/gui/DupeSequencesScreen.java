@@ -27,7 +27,7 @@ public class DupeSequencesScreen extends WindowScreen {
         };
 
 
-        if (DupeSystem.isRunningSequence) {
+        if (DupeSystem.isRunningSequence.get()) {
             WButton stopBtn = table.add(theme.button("Stop Sequence")).expandX().widget();
             stopBtn.action = () -> {
                 DupeSystem.stopCurrentSequence();
