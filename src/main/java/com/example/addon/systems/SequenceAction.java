@@ -9,7 +9,7 @@ public class SequenceAction implements ISerializable<SequenceAction> {
     private String data;
     private int slot = -1;
     private int count = 1;
-    private int repeatCount = 1; // Added field
+    private int repeatCount = 1;
     private SlotActionType slotActionType = SlotActionType.PICKUP;
 
     public SequenceAction() {
@@ -18,24 +18,25 @@ public class SequenceAction implements ISerializable<SequenceAction> {
     }
 
     public SequenceAction(ActionType type, String data) {
-        this.type = type;
-        this.data = data;
+        this.type = type != null ? type : ActionType.COMMAND;
+        this.data = data != null ? data : "";
     }
 
+    // Getters and setters with validation
     public ActionType getType() {
         return type;
     }
 
     public void setType(ActionType type) {
-        this.type = type;
+        this.type = type != null ? type : ActionType.COMMAND;
     }
 
     public String getData() {
-        return data;
+        return data != null ? data : "";
     }
 
     public void setData(String data) {
-        this.data = data;
+        this.data = data != null ? data : "";
     }
 
     public int getSlot() {
@@ -51,7 +52,7 @@ public class SequenceAction implements ISerializable<SequenceAction> {
     }
 
     public void setCount(int count) {
-        this.count = count;
+        this.count = Math.max(1, count); // Ensure count is at least 1
     }
 
     public int getRepeatCount() {
@@ -59,7 +60,7 @@ public class SequenceAction implements ISerializable<SequenceAction> {
     }
 
     public void setRepeatCount(int repeatCount) {
-        this.repeatCount = repeatCount;
+        this.repeatCount = Math.max(1, repeatCount); // Ensure repeatCount is at least 1
     }
 
     public SlotActionType getSlotActionType() {
@@ -67,29 +68,41 @@ public class SequenceAction implements ISerializable<SequenceAction> {
     }
 
     public void setSlotActionType(SlotActionType slotActionType) {
-        this.slotActionType = slotActionType;
+        this.slotActionType = slotActionType != null ? slotActionType : SlotActionType.PICKUP;
     }
 
     @Override
     public NbtCompound toTag() {
         NbtCompound tag = new NbtCompound();
-        tag.putString("type", type.name());
-        tag.putString("data", data);
-        tag.putInt("slot", slot);
-        tag.putInt("count", count);
-        tag.putInt("repeatCount", repeatCount);
-        tag.putString("slotActionType", slotActionType.name());
+        
+        try {
+            // Store type as string
+            tag.putString("type", type.name());
+            
+            // Store data
+            tag.putString("data", data != null ? data : "");
+            
+            // Store numeric values
+            tag.putInt("slot", slot);
+            tag.putInt("count", count);
+            tag.putInt("repeatCount", repeatCount);
+            
+            // Store slot action type
+            tag.putString("slotActionType", slotActionType.name());
+            
+        } catch (Exception e) {
+            System.err.println("Error serializing SequenceAction: " + e.getMessage());
+        }
+        
         return tag;
     }
 
     @Override
     public SequenceAction fromTag(NbtCompound tag) {
-        type = ActionType.valueOf(tag.getString("type").orElse("COMMAND")); // Default to COMMAND
-        data = tag.getString("data").orElse("");
-        slot = tag.getInt("slot").orElse(-1);
-        count = tag.getInt("count").orElse(1);
-        repeatCount = tag.contains("repeatCount") ? tag.getInt("repeatCount").orElse(1) : 1; // Default to 1
-        slotActionType = SlotActionType.valueOf(tag.getString("slotActionType").orElse("PICKUP")); // Default to PICKUP
-        return this;
-    }
-}
+        if (tag == null) {
+            return this;
+        }
+
+        try {
+            // Load action type with fallback
+            if (tag.contains("type

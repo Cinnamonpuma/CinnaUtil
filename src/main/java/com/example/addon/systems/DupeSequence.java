@@ -68,7 +68,11 @@ public class DupeSequence implements ISerializable<DupeSequence> {
     }
 
     public void setKeybind(Keybind keybind) {
-        this.keybind = keybind;
+        if (keybind == null) {
+            this.keybind = Keybind.none();
+        } else {
+            this.keybind = keybind;
+        }
     }
 
     public List<String> getCommands() {
@@ -107,8 +111,13 @@ public class DupeSequence implements ISerializable<DupeSequence> {
         tag.putString("name", name);
         tag.putInt("delay", delayBetweenActions);
         tag.putBoolean("allAtOnce", allAtOnce);
-        tag.putString("keybind", keybind.toString());
         tag.putInt("repeatCount", repeatCount);
+
+        // Serialize keybind using Meteor Client's built-in method
+        if (keybind != null && !keybind.equals(Keybind.none())) {
+            NbtCompound keybindTag = keybind.toTag();
+            tag.put("keybind", keybindTag);
+        }
 
         NbtList actionsTag = new NbtList();
         for (SequenceAction action : actions) {
@@ -121,115 +130,78 @@ public class DupeSequence implements ISerializable<DupeSequence> {
 
     @Override
     public DupeSequence fromTag(NbtCompound tag) {
-        // Handle Optional return types for NBT operations
-        name = tag.getString("name").orElse("Unnamed Sequence");
-        delayBetweenActions = tag.getInt("delay").orElse(0);
-        allAtOnce = tag.getBoolean("allAtOnce").orElse(false);
-        repeatCount = tag.getInt("repeatCount").orElse(1);
+        // Fixed NBT deserialization - removed incorrect .orElse() calls
+        if (tag.contains("name")) {
+            name = tag.getString("name");
+        } else {
+            name = "Unnamed Sequence";
+        }
+        
+        if (tag.contains("delay")) {
+            delayBetweenActions = tag.getInt("delay");
+        } else {
+            delayBetweenActions = 0;
+        }
+        
+        if (tag.contains("allAtOnce")) {
+            allAtOnce = tag.getBoolean("allAtOnce");
+        } else {
+            allAtOnce = false;
+        }
+        
+        if (tag.contains("repeatCount")) {
+            repeatCount = tag.getInt("repeatCount");
+        } else {
+            repeatCount = 1;
+        }
 
-        // Handle keybind deserialization - fix the API usage
+        // Fixed keybind deserialization using Meteor Client's built-in method
         if (tag.contains("keybind")) {
-            String keybindString = tag.getString("keybind").orElse("");
-            if (!keybindString.isEmpty()) {
-                try {
-                    // Try to parse the keybind - may need to use different method based on Meteor Client version
-                    this.keybind = parseKeybind(keybindString);
-                } catch (Exception e) {
-                    System.err.println("[DupeSequence] Failed to parse keybind string '" + keybindString + "': " + e.getMessage());
-                    this.keybind = Keybind.none();
-                }
-            } else {
+            try {
+                NbtCompound keybindTag = tag.getCompound("keybind");
+                this.keybind = Keybind.fromTag(keybindTag);
+            } catch (Exception e) {
+                System.err.println("[DupeSequence] Failed to deserialize keybind: " + e.getMessage());
                 this.keybind = Keybind.none();
             }
         } else {
             this.keybind = Keybind.none();
         }
 
+        // Ensure keybind is never null
+        if (this.keybind == null) {
+            this.keybind = Keybind.none();
+        }
+
         actions.clear();
         if (tag.contains("actions")) {
-            NbtList actionsTag = tag.getList("actions").orElse(new NbtList());
-            for (NbtElement element : actionsTag) {
-                if (element instanceof NbtCompound actionTag) {
-                    SequenceAction action = new SequenceAction();
-                    action.fromTag(actionTag);
-                    actions.add(action);
+            try {
+                NbtList actionsTag = tag.getList("actions", NbtElement.COMPOUND_TYPE);
+                for (NbtElement element : actionsTag) {
+                    if (element instanceof NbtCompound actionTag) {
+                        SequenceAction action = new SequenceAction();
+                        action.fromTag(actionTag);
+                        actions.add(action);
+                    }
                 }
+            } catch (Exception e) {
+                System.err.println("[DupeSequence] Failed to deserialize actions: " + e.getMessage());
             }
         } else if (tag.contains("commands")) {
             // Legacy support for old command format
-            NbtList commandsTag = tag.getList("commands").orElse(new NbtList());
-            for (NbtElement element : commandsTag) {
-                String commandString = element.asString().orElse("");
-                if (!commandString.isEmpty()) {
-                    addCommand(commandString);
+            try {
+                NbtList commandsTag = tag.getList("commands", NbtElement.STRING_TYPE);
+                for (NbtElement element : commandsTag) {
+                    String commandString = element.asString();
+                    if (commandString != null && !commandString.isEmpty()) {
+                        addCommand(commandString);
+                    }
                 }
+            } catch (Exception e) {
+                System.err.println("[DupeSequence] Failed to deserialize legacy commands: " + e.getMessage());
             }
         }
 
         return this;
-    }
-
-    /**
-     * Helper method to parse keybind from string
-     * This may need adjustment based on your Meteor Client version
-     */
-    private Keybind parseKeybind(String keybindString) {
-        if (keybindString == null || keybindString.isEmpty() || keybindString.equalsIgnoreCase("none")) {
-            return Keybind.none();
-        }
-
-        // Try to map common key names (like those from Keybind.toString()) to GLFW key codes.
-        // This is an attempt to reverse what Keybind.toString() might be doing.
-        // Example: if keybindString is "J", we look for GLFW.GLFW_KEY_J
-        // If keybindString is "LEFT_CONTROL", we look for GLFW.GLFW_KEY_LEFT_CONTROL
-        try {
-            String glfwKeyName = keybindString.toUpperCase();
-            if (!glfwKeyName.startsWith("GLFW_KEY_")) {
-                // Simple letters/numbers might just be the character itself (e.g., "J")
-                // or a descriptive name (e.g., "ESCAPE", "LEFT_CONTROL")
-                // We prepend "GLFW_KEY_" to match GLFW constant names.
-                if (glfwKeyName.length() == 1 && Character.isLetterOrDigit(glfwKeyName.charAt(0))) {
-                    glfwKeyName = "GLFW_KEY_" + glfwKeyName;
-                } else {
-                    // For names like "ESCAPE", "LEFT_CONTROL", they might already be part of the GLFW constant name
-                    // or need specific mapping. This is a heuristic.
-                    // We'll try to find a field in GLFW class that ends with the key name.
-                    // This part is more complex and might require a pre-defined map for accuracy.
-                    // For now, let's assume Keybind.toString() gives a name that can be directly used
-                    // or easily transformed into a GLFW constant name.
-                    // A simple heuristic: if it's a known descriptive name, try it directly with GLFW_KEY_ prefix.
-                    // This is still a guess without knowing Keybind.toString() exact output format.
-                    boolean foundMatch = false;
-                    for (java.lang.reflect.Field field : org.lwjgl.glfw.GLFW.class.getFields()) {
-                        if (field.getName().endsWith("_" + glfwKeyName)) {
-                            glfwKeyName = field.getName();
-                            foundMatch = true;
-                            break;
-                        }
-                    }
-                    if (!foundMatch && !glfwKeyName.startsWith("GLFW_KEY_")) {
-                         glfwKeyName = "GLFW_KEY_" + glfwKeyName; // Default attempt
-                    }
-                }
-            }
-
-            java.lang.reflect.Field field = org.lwjgl.glfw.GLFW.class.getField(glfwKeyName);
-            int keyCode = field.getInt(null);
-            return Keybind.fromKey(keyCode);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            // System.err.println("[DupeSequence] Failed to find GLFW key code for '" + keybindString + "' (tried as '" + keybindString.toUpperCase().replace(".", "_") + "'): " + e.getMessage());
-        } catch (Exception e) {
-            // System.err.println("[DupeSequence] Error resolving keybind '" + keybindString + "' via reflection: " + e.getMessage());
-        }
-
-        // Fallback: try to parse as an integer key code directly (if it was stored as such)
-        try {
-            int keyCode = Integer.parseInt(keybindString);
-            return Keybind.fromKey(keyCode);
-        } catch (NumberFormatException e) {
-            System.err.println("[DupeSequence] Failed to parse keybind string '" + keybindString + "' as integer, and GLFW name lookup also failed.");
-        }
-
-        return Keybind.none(); // Default to none if all parsing fails
     }
 }

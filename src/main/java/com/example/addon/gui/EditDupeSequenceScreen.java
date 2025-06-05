@@ -9,16 +9,16 @@ import meteordevelopment.meteorclient.gui.WindowScreen;
 import meteordevelopment.meteorclient.gui.widgets.containers.WTable;
 import meteordevelopment.meteorclient.gui.widgets.pressable.WButton;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
-// Remove the problematic import
-// import meteordevelopment.meteorclient.gui.widgets.input.WKeybind;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
+import org.lwjgl.glfw.GLFW;
 
 public class EditDupeSequenceScreen extends WindowScreen {
     private boolean settingKeybind = false;
     private final DupeSequence sequence;
     private final MinecraftClient mc = MinecraftClient.getInstance();
+    private WWidget keybindLabel;
 
     public EditDupeSequenceScreen(GuiTheme theme, DupeSequence sequence) {
         super(theme, "Edit Sequence");
@@ -79,17 +79,26 @@ public class EditDupeSequenceScreen extends WindowScreen {
         };
         table.row();
 
-        // Keybind - Alternative approach using text box for now
+        // Keybind section - FIXED IMPLEMENTATION
         table.add(theme.label("Keybind:"));
-        String keybindText = sequence.getKeybind() != null ? sequence.getKeybind().toString() : "None";
-        var keybindLabel = table.add(theme.label(keybindText)).expandX().widget();
+        String keybindText = getKeybindDisplayText();
+        keybindLabel = table.add(theme.label(keybindText)).expandX().widget();
         
-        // Add a button to set keybind manually (you can enhance this later)
-        var setKeybindBtn = table.add(theme.button("Set Keybind")).widget();
+        var setKeybindBtn = table.add(theme.button(settingKeybind ? "Press key..." : "Set Keybind")).widget();
         setKeybindBtn.action = () -> {
-            // For now, just show that keybind functionality needs to be implemented
-            settingKeybind = true;
-            keybindLabel.set("Press a key..."); // Use set() instead of setRenderText()
+            if (!settingKeybind) {
+                settingKeybind = true;
+                updateKeybindDisplay();
+            }
+        };
+        
+        // Clear keybind button
+        var clearKeybindBtn = table.add(theme.button("Clear")).widget();
+        clearKeybindBtn.action = () -> {
+            sequence.setKeybind(null);
+            DupeSystem.get().save();
+            settingKeybind = false;
+            updateKeybindDisplay();
         };
         table.row();
 
@@ -105,19 +114,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
             WTable actionRow = actionsTable.add(theme.table()).expandX().widget();
 
             // Action label
-            String actionLabel;
-            if (action.getType() == ActionType.COMMAND) {
-                actionLabel = "Command: " + action.getData();
-            } else if (action.getType() == ActionType.PACKET) {
-                actionLabel = "Packet: Slot " + action.getSlot() + (action.getRepeatCount() > 1 ? " (x" + action.getRepeatCount() + ")" : "");
-            } else if (action.getType() == ActionType.WAIT) {
-                actionLabel = "Wait: " + action.getData() + "ticks";
-            } else if (action.getType() == ActionType.CLOSE_GUI) {
-                actionLabel = "Close GUI: " + (action.getData().equals("desync") ? "Desync" : "Normal");
-            } else {
-                actionLabel = "Unknown action type";
-            }
-
+            String actionLabel = getActionDisplayText(action);
             actionRow.add(theme.label(actionLabel)).expandX();
 
             WButton editBtn = actionRow.add(theme.button("Edit")).widget();
@@ -126,26 +123,16 @@ public class EditDupeSequenceScreen extends WindowScreen {
             };
 
             if (i > 0) {
-                WButton upBtn = actionRow.add(theme.button("up")).widget();
+                WButton upBtn = actionRow.add(theme.button("↑")).widget();
                 upBtn.action = () -> {
-                    SequenceAction temp = sequence.getActions().get(index);
-                    sequence.getActions().set(index, sequence.getActions().get(index - 1));
-                    sequence.getActions().set(index - 1, temp);
-                    DupeSystem.get().save();
-                    clear();
-                    initWidgets();
+                    moveAction(index, -1);
                 };
             }
 
             if (i < sequence.getActions().size() - 1) {
-                WButton downBtn = actionRow.add(theme.button("down")).widget();
+                WButton downBtn = actionRow.add(theme.button("↓")).widget();
                 downBtn.action = () -> {
-                    SequenceAction temp = sequence.getActions().get(index);
-                    sequence.getActions().set(index, sequence.getActions().get(index + 1));
-                    sequence.getActions().set(index + 1, temp);
-                    DupeSystem.get().save();
-                    clear();
-                    initWidgets();
+                    moveAction(index, 1);
                 };
             }
 
@@ -153,8 +140,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
             removeBtn.action = () -> {
                 sequence.removeAction(index);
                 DupeSystem.get().save();
-                clear();
-                initWidgets();
+                refreshUI();
             };
 
             actionsTable.row();
@@ -167,8 +153,7 @@ public class EditDupeSequenceScreen extends WindowScreen {
         addCmdBtn.action = () -> {
             sequence.addAction(new SequenceAction(ActionType.COMMAND, ""));
             DupeSystem.get().save();
-            clear();
-            initWidgets();
+            refreshUI();
         };
 
         WButton addPacketBtn = addButtonsTable.add(theme.button("Add Packet")).expandX().widget();
@@ -179,18 +164,15 @@ public class EditDupeSequenceScreen extends WindowScreen {
             action.setRepeatCount(1);
             sequence.addAction(action);
             DupeSystem.get().save();
-            clear();
-            initWidgets();
+            refreshUI();
         };
 
         WButton addWaitBtn = addButtonsTable.add(theme.button("Add Wait")).expandX().widget();
         addWaitBtn.action = () -> {
-            SequenceAction action = new SequenceAction(ActionType.WAIT, "");
-            action.setData("20");
+            SequenceAction action = new SequenceAction(ActionType.WAIT, "20");
             sequence.addAction(action);
             DupeSystem.get().save();
-            clear();
-            initWidgets();
+            refreshUI();
         };
 
         WButton addCloseGuiBtn = addButtonsTable.add(theme.button("Add Close GUI")).expandX().widget();
@@ -198,16 +180,13 @@ public class EditDupeSequenceScreen extends WindowScreen {
             SequenceAction action = new SequenceAction(ActionType.CLOSE_GUI, "normal");
             sequence.addAction(action);
             DupeSystem.get().save();
-            clear();
-            initWidgets();
+            refreshUI();
         };
         table.row();
 
         // Start/Stop sequence button
-        String buttonText = "Start Sequence";
-        if (DupeSystem.isRunningSequence && DupeSystem.getCurrentSequence() == sequence) {
-            buttonText = "Stop Sequence";
-        }
+        String buttonText = (DupeSystem.isRunningSequence && DupeSystem.getCurrentSequence() == sequence) 
+            ? "Stop Sequence" : "Start Sequence";
         WButton testBtn = table.add(theme.button(buttonText)).expandX().widget();
         testBtn.action = () -> {
             if (DupeSystem.isRunningSequence && DupeSystem.getCurrentSequence() == sequence) {
@@ -215,23 +194,76 @@ public class EditDupeSequenceScreen extends WindowScreen {
             } else {
                 DupeSystem.executeSequence(sequence, sequence.getRepeatCount());
             }
-            clear();
-            initWidgets();
+            refreshUI();
         };
 
         WButton backBtn = table.add(theme.button("Back")).expandX().widget();
         backBtn.action = () -> mc.setScreen(new DupeSequencesScreen(theme));
     }
 
+    private String getKeybindDisplayText() {
+        if (settingKeybind) {
+            return "Press any key...";
+        }
+        return sequence.getKeybind() != null ? sequence.getKeybind().toString() : "None";
+    }
+
+    private void updateKeybindDisplay() {
+        if (keybindLabel != null) {
+            keybindLabel.set(getKeybindDisplayText());
+        }
+    }
+
+    private String getActionDisplayText(SequenceAction action) {
+        switch (action.getType()) {
+            case COMMAND:
+                return "Command: " + (action.getData().isEmpty() ? "[empty]" : action.getData());
+            case PACKET:
+                return String.format("Packet: Slot %d%s (%s)", 
+                    action.getSlot(),
+                    action.getRepeatCount() > 1 ? " (x" + action.getRepeatCount() + ")" : "",
+                    action.getSlotActionType().name().toLowerCase());
+            case WAIT:
+                return "Wait: " + action.getData() + " ticks";
+            case CLOSE_GUI:
+                return "Close GUI: " + (action.getData().equals("desync") ? "Desync" : "Normal");
+            default:
+                return "Unknown action type";
+        }
+    }
+
+    private void moveAction(int index, int direction) {
+        int newIndex = index + direction;
+        if (newIndex >= 0 && newIndex < sequence.getActions().size()) {
+            SequenceAction temp = sequence.getActions().get(index);
+            sequence.getActions().set(index, sequence.getActions().get(newIndex));
+            sequence.getActions().set(newIndex, temp);
+            DupeSystem.get().save();
+            refreshUI();
+        }
+    }
+
+    private void refreshUI() {
+        clear();
+        initWidgets();
+    }
+
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (settingKeybind) {
-            sequence.setKeybind(Keybind.fromKey(keyCode));
+            // Handle escape key to cancel keybind setting
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                settingKeybind = false;
+                updateKeybindDisplay();
+                return true;
+            }
+            
+            // Set the keybind
+            Keybind newKeybind = Keybind.fromKey(keyCode);
+            sequence.setKeybind(newKeybind);
             DupeSystem.get().save();
             settingKeybind = false;
-            // Re-initialize widgets to update the keybind label
-            clear();
-            initWidgets();
+            updateKeybindDisplay();
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -263,93 +295,103 @@ public class EditDupeSequenceScreen extends WindowScreen {
             };
             table.row();
 
-            if (action.getType() == ActionType.COMMAND) {
-                table.add(theme.label("Command:"));
-                var cmdBox = table.add(theme.textBox(action.getData())).minWidth(400).expandX().widget();
-                cmdBox.action = () -> {
-                    action.setData(cmdBox.get());
-                    DupeSystem.get().save();
-                };
-            } else if (action.getType() == ActionType.PACKET) {
-                table.add(theme.label("Slot:"));
-                var slotBox = table.add(theme.textBox(Integer.toString(action.getSlot()))).expandX().widget();
-                slotBox.action = () -> {
-                    try {
-                        int slot = Integer.parseInt(slotBox.get());
-                        action.setSlot(slot);
+            switch (action.getType()) {
+                case COMMAND:
+                    table.add(theme.label("Command:"));
+                    var cmdBox = table.add(theme.textBox(action.getData())).minWidth(400).expandX().widget();
+                    cmdBox.action = () -> {
+                        action.setData(cmdBox.get());
                         DupeSystem.get().save();
-                    } catch (NumberFormatException e) {
-                    }
-                };
-                table.row();
+                    };
+                    break;
 
-                table.add(theme.label("Count:"));
-                var countBox = table.add(theme.textBox(Integer.toString(action.getCount()))).expandX().widget();
-                countBox.action = () -> {
-                    try {
-                        int count = Integer.parseInt(countBox.get());
-                        if (count > 0) {
-                            action.setCount(count);
+                case PACKET:
+                    table.add(theme.label("Slot:"));
+                    var slotBox = table.add(theme.textBox(Integer.toString(action.getSlot()))).expandX().widget();
+                    slotBox.action = () -> {
+                        try {
+                            int slot = Integer.parseInt(slotBox.get());
+                            action.setSlot(slot);
                             DupeSystem.get().save();
+                        } catch (NumberFormatException e) {
+                            // Invalid input, ignore
                         }
-                    } catch (NumberFormatException e) {
-                    }
-                };
-                table.row();
+                    };
+                    table.row();
 
-                table.add(theme.label("Send At Once Count:"));
-                var sendAtOnceCountBox = table.add(theme.textBox(Integer.toString(action.getRepeatCount()))).expandX().widget();
-                sendAtOnceCountBox.action = () -> {
-                    try {
-                        int sendAtOnceCount = Integer.parseInt(sendAtOnceCountBox.get());
-                        if (sendAtOnceCount > 0) {
-                            action.setRepeatCount(sendAtOnceCount);
-                            DupeSystem.get().save();
+                    table.add(theme.label("Count:"));
+                    var countBox = table.add(theme.textBox(Integer.toString(action.getCount()))).expandX().widget();
+                    countBox.action = () -> {
+                        try {
+                            int count = Integer.parseInt(countBox.get());
+                            if (count > 0) {
+                                action.setCount(count);
+                                DupeSystem.get().save();
+                            }
+                        } catch (NumberFormatException e) {
+                            // Invalid input, ignore
                         }
-                    } catch (NumberFormatException e) {
-                    }
-                };
-                table.row();
+                    };
+                    table.row();
 
-                table.add(theme.label("Action:"));
-                var actionTypeDropdown = table.add(theme.dropdown(SlotActionType.values(), action.getSlotActionType())).expandX().widget();
-                actionTypeDropdown.action = () -> {
-                    action.setSlotActionType(actionTypeDropdown.get());
-                    DupeSystem.get().save();
-                };
-            } else if (action.getType() == ActionType.WAIT) {
-                table.add(theme.label("Delay (ticks):"));
-                var waitTimeBox = table.add(theme.textBox(action.getData())).expandX().widget();
-                waitTimeBox.action = () -> {
-                    try {
-                        int waitTime = Integer.parseInt(waitTimeBox.get());
-                        if (waitTime >= 0) {
-                            action.setData(Integer.toString(waitTime));
-                            DupeSystem.get().save();
+                    table.add(theme.label("Repeat Count:"));
+                    var repeatCountBox = table.add(theme.textBox(Integer.toString(action.getRepeatCount()))).expandX().widget();
+                    repeatCountBox.action = () -> {
+                        try {
+                            int repeatCount = Integer.parseInt(repeatCountBox.get());
+                            if (repeatCount > 0) {
+                                action.setRepeatCount(repeatCount);
+                                DupeSystem.get().save();
+                            }
+                        } catch (NumberFormatException e) {
+                            // Invalid input, ignore
                         }
-                    } catch (NumberFormatException e) {
+                    };
+                    table.row();
+
+                    table.add(theme.label("Action Type:"));
+                    var actionTypeDropdown = table.add(theme.dropdown(SlotActionType.values(), action.getSlotActionType())).expandX().widget();
+                    actionTypeDropdown.action = () -> {
+                        action.setSlotActionType(actionTypeDropdown.get());
+                        DupeSystem.get().save();
+                    };
+                    break;
+
+                case WAIT:
+                    table.add(theme.label("Delay (ticks):"));
+                    var waitTimeBox = table.add(theme.textBox(action.getData())).expandX().widget();
+                    waitTimeBox.action = () -> {
+                        try {
+                            int waitTime = Integer.parseInt(waitTimeBox.get());
+                            if (waitTime >= 0) {
+                                action.setData(Integer.toString(waitTime));
+                                DupeSystem.get().save();
+                            }
+                        } catch (NumberFormatException e) {
+                            // Invalid input, ignore
+                        }
+                    };
+                    break;
+
+                case CLOSE_GUI:
+                    table.add(theme.label("Close Type:"));
+                    String[] options = {"normal", "desync"};
+                    String currentValue = action.getData();
+                    if (!currentValue.equals("normal") && !currentValue.equals("desync")) {
+                        currentValue = "normal";
+                        action.setData(currentValue);
                     }
-                };
-            } else if (action.getType() == ActionType.CLOSE_GUI) {
-                table.add(theme.label("Close Type:"));
-                String[] options = {"normal", "desync"};
-                String currentValue = action.getData();
-                if (!currentValue.equals("normal") && !currentValue.equals("desync")) {
-                    currentValue = "normal";
-                    action.setData(currentValue);
-                }
-                var closeTypeDropdown = table.add(theme.dropdown(options, currentValue)).expandX().widget();
-                closeTypeDropdown.action = () -> {
-                    action.setData(closeTypeDropdown.get());
-                    DupeSystem.get().save();
-                };
+                    var closeTypeDropdown = table.add(theme.dropdown(options, currentValue)).expandX().widget();
+                    closeTypeDropdown.action = () -> {
+                        action.setData(closeTypeDropdown.get());
+                        DupeSystem.get().save();
+                    };
+                    break;
             }
             table.row();
 
             WButton doneBtn = table.add(theme.button("Done")).expandX().widget();
-            doneBtn.action = () -> {
-                mc.setScreen(parent);
-            };
+            doneBtn.action = () -> mc.setScreen(parent);
         }
     }
 }
